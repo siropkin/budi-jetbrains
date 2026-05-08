@@ -14,6 +14,7 @@
 - Persistent settings (`BudiSettings` / `BudiConfigurable`) — Settings → Tools → budi page exposes daemon URL (loopback-validated), cloud endpoint (getbudi.dev-validated), polling interval (3 s minimum), and the `includeOtherSurfaces` opt-out that drops the `?surface=jetbrains` filter.
 - First-run welcome notification — sticky balloon under a `Budi` notification group; "Show install command" surfaces the platform-appropriate Homebrew / curl / PowerShell one-liner with copy-to-clipboard. Command is never auto-executed.
 - Pinned install / upgrade commands (`BudiInstallCommands`) for macOS / Linux / Windows, mirroring `siropkin/budi-cursor/src/installCommands.ts`.
+- Actionable upgrade prompt (`BudiUpgradeNotifier`) — sticky balloon when the daemon's `api_version` is below `MIN_API_VERSION`. Two-layer throttle: per-session latch (one balloon per IDE start) + persistent `suppressUpdateNotification` setting (auto-resets when the daemon catches up and then drifts stale again). "Show update command" action surfaces both the universal `budi update` one-liner and the platform-specific upgrade fallback. Never auto-runs anything; user copies and runs themselves.
 
 ## [0.1.0]
 

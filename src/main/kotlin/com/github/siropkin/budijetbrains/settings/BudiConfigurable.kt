@@ -39,6 +39,7 @@ class BudiConfigurable : Configurable {
     private var cloudEndpointField = settings.state.cloudEndpoint
     private var pollingIntervalField = settings.state.pollingIntervalMs
     private var includeOtherSurfacesField = settings.state.includeOtherSurfaces
+    private var suppressUpdateNotificationField = settings.state.suppressUpdateNotification
 
     override fun getDisplayName(): String = "budi"
 
@@ -75,6 +76,14 @@ class BudiConfigurable : Configurable {
                             "Off by default — the per-host scope is what makes the cloud dashboard's surface breakdown useful.",
                     )
             }
+            row {
+                cell(JBCheckBox("Suppress \"daemon needs an update\" notification"))
+                    .bindSelected({ suppressUpdateNotificationField }, { suppressUpdateNotificationField = it })
+                    .comment(
+                        "When checked, the upgrade prompt is silenced for the current stale-version episode. " +
+                            "Auto-resets the next time the daemon's api_version catches up and then drifts stale again.",
+                    )
+            }
         }
         return panel
     }
@@ -84,7 +93,8 @@ class BudiConfigurable : Configurable {
         return daemonUrlField != settings.state.daemonUrl ||
             cloudEndpointField != settings.state.cloudEndpoint ||
             pollingIntervalField != settings.state.pollingIntervalMs ||
-            includeOtherSurfacesField != settings.state.includeOtherSurfaces
+            includeOtherSurfacesField != settings.state.includeOtherSurfaces ||
+            suppressUpdateNotificationField != settings.state.suppressUpdateNotification
     }
 
     override fun apply() {
@@ -109,6 +119,7 @@ class BudiConfigurable : Configurable {
             cloudEndpoint = cloudEndpointField
             pollingIntervalMs = pollingIntervalField
             includeOtherSurfaces = includeOtherSurfacesField
+            suppressUpdateNotification = suppressUpdateNotificationField
         }
         BudiPoller.getInstance().refreshNow()
     }
@@ -118,6 +129,7 @@ class BudiConfigurable : Configurable {
         cloudEndpointField = settings.state.cloudEndpoint
         pollingIntervalField = settings.state.pollingIntervalMs
         includeOtherSurfacesField = settings.state.includeOtherSurfaces
+        suppressUpdateNotificationField = settings.state.suppressUpdateNotification
         panel.reset()
     }
 }

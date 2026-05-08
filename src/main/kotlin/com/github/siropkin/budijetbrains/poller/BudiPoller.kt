@@ -1,6 +1,7 @@
 package com.github.siropkin.budijetbrains.poller
 
 import com.github.siropkin.budijetbrains.daemon.BudiClient
+import com.github.siropkin.budijetbrains.notifier.BudiUpgradeNotifier
 import com.github.siropkin.budijetbrains.settings.BudiSettings
 import com.github.siropkin.budijetbrains.state.BudiAppState
 import com.intellij.openapi.application.ApplicationManager
@@ -90,6 +91,7 @@ class BudiPoller {
             log.info("First daemon detection — leaving FIRST_RUN.")
         }
         BudiAppState.getInstance().update(health, statusline, settings.state.everSawDaemon)
+        BudiUpgradeNotifier.getInstance().onHealthObserved(health)
     }
 
     companion object {
