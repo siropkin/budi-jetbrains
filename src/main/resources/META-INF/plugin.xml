@@ -1,19 +1,20 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.siropkin.budijetbrains</id>
-    <name>budi-jetbrains</name>
-    <vendor>siropkin</vendor>
+    <name>budi</name>
+    <vendor email="ivan@siropkin.dev" url="https://getbudi.dev">siropkin</vendor>
+
     <description><![CDATA[
-        <p><b>budi-jetbrains</b> is a repository that provides a pure template to make it easier to create a new plugin project.</p>
-        <p>The main goal of this template is to speed up the setup phase of plugin development for both new and experienced developers by preconfiguring the project scaffold and CI, linking to the proper documentation pages, and keeping everything organized.</p>
+        <p><b>budi</b> shows your AI coding spend in the IDE status bar — last 1d / 7d / 30d, mirroring the Claude Code statusline.</p>
+        <p>Sibling of the <a href="https://github.com/siropkin/budi-cursor">budi-cursor</a> extension for VS Code and Cursor. Reads from the local <a href="https://getbudi.dev">budi daemon</a> on <code>127.0.0.1:7878</code>; if the daemon is missing, the plugin guides you through the install. JetBrains-rooted Copilot Chat usage is tracked under the <code>jetbrains</code> surface so the cloud dashboard can break costs down by editor host.</p>
     ]]></description>
 
+    <change-notes><![CDATA[
+        <h3>0.1.0</h3>
+        <ul>
+            <li>Initial release. Status-bar widget, daemon health polling, surface=jetbrains analytics filter.</li>
+        </ul>
+    ]]></change-notes>
+
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.siropkin.budijetbrains.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.siropkin.budijetbrains.startup.MyProjectActivity" />
-    </extensions>
 </idea-plugin>
