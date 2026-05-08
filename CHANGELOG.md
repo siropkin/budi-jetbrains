@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Promote v0.1.0-beta.1 to **Stable** channel after dogfooding. No functional changes from the beta — same feature set, same compatibility floor (IntelliJ Platform 2024.2 / 242). See `[0.1.0-beta.1]` below for the full feature list.
+
 ## [0.1.0-beta.1]
 
 ### Added
