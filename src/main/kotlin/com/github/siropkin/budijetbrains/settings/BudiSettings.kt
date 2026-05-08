@@ -51,6 +51,31 @@ class BudiSettingsState {
      * Mirrors budi-cursor's `EVER_SAW_DAEMON_KEY` globalState entry.
      */
     var everSawDaemon: Boolean = false
+
+    /**
+     * When true, suppress the "Daemon api_version is older than this
+     * plugin requires" notification (#7). Set by clicking "Don't show
+     * again" on the upgrade balloon. Persists across IDE restarts so a
+     * user who has chosen to ignore the prompt isn't pestered every
+     * session.
+     *
+     * The notification will reappear automatically once the daemon's
+     * api_version catches up with `MIN_API_VERSION` and then drifts
+     * stale again — i.e. this latch only suppresses the *current*
+     * stale-version episode. (See `BudiUpgradeNotifier` for the reset
+     * mechanism.)
+     */
+    var suppressUpdateNotification: Boolean = false
+
+    /**
+     * The api_version this plugin most recently saw the daemon report.
+     * Used as the cursor for the suppress-reset described above: if the
+     * daemon catches up (current > snapshotted), `suppressUpdateNotification`
+     * resets to `false`. Always written together with the snapshot — the
+     * suppress is reset *only* on a transition out of stale state, never
+     * during one.
+     */
+    var lastObservedApiVersion: Int = 0
 }
 
 @Service(Service.Level.APP)
