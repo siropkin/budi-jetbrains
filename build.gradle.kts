@@ -12,6 +12,15 @@ version = providers.gradleProperty("pluginVersion").get()
 
 kotlin {
     jvmToolchain(providers.gradleProperty("javaVersion").get().toInt())
+    compilerOptions {
+        // Emit real JVM default methods instead of DefaultImpls bridges.
+        // Without this, Kotlin synthesizes overrides in implementing
+        // classes for every default method on the implemented interface
+        // — including IntelliJ Platform's deprecated overloads like
+        // StatusBarWidget.getPresentation(PlatformType) — which the
+        // Marketplace plugin verifier flags as deprecated API usage.
+        freeCompilerArgs.add("-jvm-default=no-compatibility")
+    }
 }
 
 dependencies {

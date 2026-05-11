@@ -4,6 +4,16 @@
 
 ## [Unreleased]
 
+## [0.1.2]
+
+### Changed
+
+- Widen `pluginUntilBuild` from `252.*` to `261.*` so the plugin installs on WebStorm / IntelliJ / PyCharm builds up through the 2026.1 line. The widget surfaces (`StatusBarWidget`, `Configurable`, `NotificationGroupManager`) have been stable since 2024.2; the widened range matches that.
+
+### Fixed
+
+- Drop Kotlin-synthesized bridge for the deprecated `StatusBarWidget.getPresentation(PlatformType)` overload. Moves the `TextPresentation` implementation into a separate inner object and switches the Kotlin compiler to `-jvm-default=no-compatibility` so default-interface methods stop being re-emitted as `DefaultImpls`-style bridges. Removes the 3 deprecated-API hits the Marketplace plugin verifier flagged on 0.1.1.
+
 ## [0.1.1]
 
 ### Added
