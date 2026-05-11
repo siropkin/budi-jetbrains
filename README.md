@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/31662.svg)](https://plugins.jetbrains.com/plugin/31662-budi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-JetBrains IDE status-bar plugin for [budi](https://getbudi.dev). Renders your AI coding spend over the last **1 day / 7 days / 30 days** without you ever leaving the editor — same shape as the [Claude Code statusline](https://docs.anthropic.com/en/docs/claude-code).
+A quiet status-bar widget for JetBrains IDEs that shows your AI coding spend over the last **1 day / 7 days / 30 days**, scoped to the IDE you're working in. No tool window, no popup, no nag — just three numbers in the corner of the IDE.
 
 ```
 budi · $1.42 1d · $8.30 7d · $34.21 30d
@@ -14,6 +14,21 @@ budi · $1.42 1d · $8.30 7d · $34.21 30d
 JetBrains-rooted Copilot Chat usage is tracked under the `jetbrains` surface so the [cloud dashboard](https://app.getbudi.dev) can break costs down by editor host.
 
 > **Status:** v0.1 in development. Listing is published to the [JetBrains Marketplace Beta channel](https://plugins.jetbrains.com/plugin/31662-budi/versions/beta) until daemon-path detection is confirmed on a non-dev machine.
+
+## What the widget shows
+
+The status-bar widget is one line and one click. The text changes with daemon health:
+
+| State | What you see | What it means |
+| --- | --- | --- |
+| Healthy | `budi · $X 1d · $Y 7d · $Z 30d` | Daemon reachable, recent JetBrains-surface traffic. |
+| Idle | `budi · $0.00 1d · $0.00 7d · $0.00 30d` | Daemon reachable, no recent traffic on this surface. |
+| Loading | `budi` | Daemon reachable, statusline reading not in yet. |
+| Setup | `budi · setup` | First run: the daemon has never been seen on this install. Sticky balloon offers the install command. |
+| Offline | `budi · offline` | Daemon was healthy before but is no longer reachable, or its `api_version` is below the plugin's floor. |
+| Update-needed | `budi · offline` + balloon | Daemon's `api_version` is below `MIN_API_VERSION`. Balloon offers `budi update`. |
+
+Click the widget to open the [cloud dashboard](https://app.getbudi.dev) — `/dashboard/sessions` when a JetBrains-surface session is active, `/dashboard` otherwise.
 
 ## Install
 
@@ -114,10 +129,13 @@ To rotate `PUBLISH_TOKEN`: revoke the existing token at the link above, create a
 | [`.github/workflows/build.yml`](./.github/workflows/build.yml) | CI: build, test, verify, draft release. |
 | [`.github/workflows/release.yml`](./.github/workflows/release.yml) | CI: Marketplace publish on GitHub Release. |
 
-## Related projects
+## Sibling repos
 
 - **[siropkin/budi](https://github.com/siropkin/budi)** — the daemon this plugin talks to. Rust; owns SQLite and the statusline contract.
 - **[siropkin/budi-cloud](https://github.com/siropkin/budi-cloud)** — cloud dashboard at [`app.getbudi.dev`](https://app.getbudi.dev). Opens when you click the status-bar item.
+- **[siropkin/budi-cursor](https://github.com/siropkin/budi-cursor)** — VS Code / Cursor status-bar extension. Sibling project, same daemon.
+
+JetBrains Marketplace listing: **[plugins.jetbrains.com/plugin/31662-budi](https://plugins.jetbrains.com/plugin/31662-budi)**.
 
 ## License
 
