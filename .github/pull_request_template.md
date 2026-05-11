@@ -14,5 +14,5 @@
 
 ## References
 
-<!-- Linked issue, ADRs, sibling PRs in budi / budi-cursor / budi-cloud. -->
+<!-- Linked issue, sibling PRs in budi / budi-cursor / budi-cloud. -->
 - Closes #

@@ -6,7 +6,7 @@
 
     <description><![CDATA[
         <p><b>budi</b> shows your AI coding spend in the IDE status bar — last 1d / 7d / 30d, mirroring the Claude Code statusline.</p>
-        <p>Sibling of the <a href="https://github.com/siropkin/budi-cursor">budi-cursor</a> extension for VS Code and Cursor. Reads from the local <a href="https://getbudi.dev">budi daemon</a> on <code>127.0.0.1:7878</code>; if the daemon is missing, the plugin guides you through the install. JetBrains-rooted Copilot Chat usage is tracked under the <code>jetbrains</code> surface so the cloud dashboard can break costs down by editor host.</p>
+        <p>Reads from the local <a href="https://getbudi.dev">budi daemon</a> on <code>127.0.0.1:7878</code>; if the daemon is missing, the plugin guides you through the install. Tracks GitHub Copilot Chat usage by default. The cloud dashboard at <a href="https://getbudi.dev">getbudi.dev</a> breaks costs down by editor host.</p>
     ]]></description>
 
     <change-notes><![CDATA[
@@ -17,4 +17,44 @@
     ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Application-scoped services. Project-scoped poller would
+             multiply daemon hits by the number of open projects. -->
+        <applicationService
+            serviceImplementation="com.github.siropkin.budijetbrains.settings.BudiSettings"/>
+        <applicationService
+            serviceImplementation="com.github.siropkin.budijetbrains.state.BudiAppState"/>
+        <applicationService
+            serviceImplementation="com.github.siropkin.budijetbrains.poller.BudiPoller"/>
+        <applicationService
+            serviceImplementation="com.github.siropkin.budijetbrains.notifier.BudiUpgradeNotifier"/>
+
+        <!-- Status bar widget. One instance per open project; reads from
+             the application-scoped state above. -->
+        <statusBarWidgetFactory
+            id="BudiStatusBarWidget"
+            implementation="com.github.siropkin.budijetbrains.statusbar.BudiStatusBarWidgetFactory"
+            order="last"/>
+
+        <!-- Settings page rendered under Settings → Tools → budi. -->
+        <applicationConfigurable
+            parentId="tools"
+            id="com.github.siropkin.budijetbrains.settings.BudiConfigurable"
+            displayName="budi"
+            instance="com.github.siropkin.budijetbrains.settings.BudiConfigurable"/>
+
+        <!-- Sticky balloon group for the welcome notification + later the
+             upgrade-prompt notification (#7). isLogByDefault keeps the
+             notification searchable in Event Log if it's dismissed before
+             the user reads it. -->
+        <notificationGroup
+            id="Budi"
+            displayType="STICKY_BALLOON"
+            isLogByDefault="true"/>
+
+        <!-- Boot the poller + welcome notification on first project open. -->
+        <postStartupActivity
+            implementation="com.github.siropkin.budijetbrains.startup.BudiProjectActivity"/>
+    </extensions>
 </idea-plugin>
