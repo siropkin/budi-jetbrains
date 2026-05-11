@@ -12,7 +12,7 @@ This repo is **presentation only**. It does not touch SQLite, does not compute c
 | **budi-jetbrains** | **this repo** (`siropkin/budi-jetbrains`) | IntelliJ Platform plugin (Kotlin). Renders what the daemon returns on the `jetbrains` surface. |
 | **budi-cloud** | [`siropkin/budi-cloud`](https://github.com/siropkin/budi-cloud) | Next.js + Supabase cloud dashboard at `app.getbudi.dev`. Unrelated to this plugin directly; consumes the surface dimension produced here. |
 
-Repo-split boundaries are pinned by [ADR-0086](https://github.com/siropkin/budi/blob/main/docs/adr/0086-extraction-boundaries.md) in the main repo — read it before crossing boundaries. The JetBrains surface specifically is motivated by `siropkin/budi#701` / `#702` (surface dimension).
+Business logic lives in `budi-core`; this repo only renders what the daemon returns. The JetBrains surface specifically is motivated by `siropkin/budi#701` / `#702` (surface dimension) — keep that boundary intact so the plugin stays a thin presentation layer over the shared statusline contract.
 
 ## Build & test
 
@@ -41,7 +41,7 @@ Plugin activates on first project open (post-startup activity). No configuration
 
 ## What the plugin does
 
-Per ADR-0088 §7 (mirrored here), the plugin is intentionally **statusline-only**:
+The plugin is intentionally **statusline-only**:
 
 1. **One status bar widget** — renders the shared status contract from the daemon, scoped to `surface=jetbrains`, in the same byte-for-byte shape the Claude Code statusline uses: `budi · $X 1d · $Y 7d · $Z 30d`. No leading glyph; health collapses into the copy (`budi`, `budi · setup`, `budi · offline`) so the surface stays as quiet as the Claude Code CLI statusline.
 2. **Click-through** — opens the cloud dashboard, mirroring the Claude Code statusline URL composition (`/dashboard/sessions` when a JetBrains-surface session is active, `/dashboard` otherwise).
@@ -77,7 +77,7 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 ## Dev notes
 
 - **No business logic.** If you catch yourself computing a cost, classifying a prompt, or rolling up tokens in this repo, stop and move it into `budi-core`. The plugin must only render what the daemon returns.
-- **No cross-surface blending.** The plugin always sends `?surface=jetbrains` and never `?provider=…`. The `includeOtherSurfaces` setting is the *only* way to drop the surface filter, and it is opt-in. Do not add summary surfaces that show blended multi-IDE totals by default — ADR-0088 §7 is explicit that scoped surfaces display their own scope only.
+- **No cross-surface blending.** The plugin always sends `?surface=jetbrains` and never `?provider=…`. The `includeOtherSurfaces` setting is the *only* way to drop the surface filter, and it is opt-in. Do not add summary surfaces that show blended multi-IDE totals by default — scoped surfaces display their own scope only.
 - **Never read user prompts or code.** Only `/analytics/statusline` and `/health` are in scope. Do not call session-detail or message-content endpoints. Do not parse Copilot Chat / AI Assistant storage on disk — that is `budi-core`'s job.
 - **Match the Claude Code statusline byte-for-byte where possible.** Number formatting, separator (` · `), slot labels (`1d` / `7d` / `30d`), and click-through URL shape are all mirrored from `crates/budi-cli/src/commands/statusline.rs` in the main repo. Drift is a bug.
 - **Graceful degradation.** If the daemon is not running, show a quiet `budi · offline` (or `budi · setup` on first run) and never spam modal errors. The first-run welcome balloon is the *one* piece of in-face UI; everything else is silent.
