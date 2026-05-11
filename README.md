@@ -134,6 +134,8 @@ To rotate `PUBLISH_TOKEN`: revoke the existing token at the link above, create a
 - **[siropkin/budi](https://github.com/siropkin/budi)** — the daemon this plugin talks to. Rust; owns SQLite and the statusline contract.
 - **[siropkin/budi-cloud](https://github.com/siropkin/budi-cloud)** — cloud dashboard at [`app.getbudi.dev`](https://app.getbudi.dev). Opens when you click the status-bar item.
 - **[siropkin/budi-cursor](https://github.com/siropkin/budi-cursor)** — VS Code / Cursor status-bar extension. Sibling project, same daemon.
+- **[siropkin/homebrew-budi](https://github.com/siropkin/homebrew-budi)** — Homebrew tap that serves the `brew install siropkin/budi/budi` install path from the first-run balloon.
+- **[siropkin/getbudi.dev](https://github.com/siropkin/getbudi.dev)** — Marketing site at [`getbudi.dev`](https://getbudi.dev).
 
 JetBrains Marketplace listing: **[plugins.jetbrains.com/plugin/31662-budi](https://plugins.jetbrains.com/plugin/31662-budi)**.
 

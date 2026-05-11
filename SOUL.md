@@ -9,8 +9,11 @@ This repo is **presentation only**. It does not touch SQLite, does not compute c
 | Product | Repo | Role |
 |---------|------|------|
 | **budi-core** | [`siropkin/budi`](https://github.com/siropkin/budi) | Rust: daemon, CLI, transcript tailer, all business logic. Owns SQLite. |
+| **budi-cursor** | [`siropkin/budi-cursor`](https://github.com/siropkin/budi-cursor) | VS Code / Cursor status-bar extension (TypeScript). Sibling surface — same daemon, `cursor` / `vscode` surface dimension. |
 | **budi-jetbrains** | **this repo** (`siropkin/budi-jetbrains`) | IntelliJ Platform plugin (Kotlin). Renders what the daemon returns on the `jetbrains` surface. |
 | **budi-cloud** | [`siropkin/budi-cloud`](https://github.com/siropkin/budi-cloud) | Next.js + Supabase cloud dashboard at `app.getbudi.dev`. Unrelated to this plugin directly; consumes the surface dimension produced here. |
+| **homebrew-budi** | [`siropkin/homebrew-budi`](https://github.com/siropkin/homebrew-budi) | Homebrew tap that serves the `brew install siropkin/budi/budi` install path referenced by the first-run notification. |
+| **getbudi.dev** | [`siropkin/getbudi.dev`](https://github.com/siropkin/getbudi.dev) | Marketing site at `getbudi.dev`. Must be kept in sync with any user-visible surface change in this plugin. |
 
 Business logic lives in `budi-core`; this repo only renders what the daemon returns. The JetBrains surface specifically is motivated by `siropkin/budi#701` / `#702` (surface dimension) — keep that boundary intact so the plugin stays a thin presentation layer over the shared statusline contract.
 
