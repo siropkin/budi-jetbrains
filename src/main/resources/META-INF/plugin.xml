@@ -5,8 +5,10 @@
     <vendor email="ivan@siropkin.dev" url="https://getbudi.dev">siropkin</vendor>
 
     <description><![CDATA[
-        <p><b>budi</b> shows your AI coding spend in the IDE status bar — last 1d / 7d / 30d, mirroring the Claude Code statusline.</p>
-        <p>Reads from the local <a href="https://getbudi.dev">budi daemon</a> on <code>127.0.0.1:7878</code>; if the daemon is missing, the plugin guides you through the install. Tracks GitHub Copilot Chat usage by default. The cloud dashboard at <a href="https://getbudi.dev">getbudi.dev</a> breaks costs down by editor host.</p>
+        <p><b>budi</b> is a quiet status-bar widget for JetBrains IDEs that shows your AI coding spend over the last <b>1 day / 7 days / 30 days</b>, scoped to the IDE host you're working in. One line, one click — no tool window, no popup, no nag.</p>
+        <p><code>budi · $1.42 1d · $8.30 7d · $34.21 30d</code></p>
+        <p>JetBrains-rooted GitHub Copilot Chat usage is tracked under the <code>jetbrains</code> surface so the <a href="https://app.getbudi.dev">cloud dashboard</a> can break costs down by editor host. Click the widget to jump there.</p>
+        <p>The plugin reads from a locally-running <a href="https://getbudi.dev">budi daemon</a> on <code>127.0.0.1:7878</code>. If the daemon isn't installed yet, the plugin shows a sticky balloon with the platform-specific install one-liner (Homebrew on macOS, curl pipe on Linux, PowerShell on Windows). The command is never auto-executed — you copy and run it yourself.</p>
     ]]></description>
 
     <change-notes><![CDATA[
