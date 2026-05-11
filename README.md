@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/31662.svg)](https://plugins.jetbrains.com/plugin/31662-budi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-JetBrains IDE status-bar plugin for [budi](https://getbudi.dev). Renders your AI coding spend over the last **1 day / 7 days / 30 days** without you ever leaving the editor — same shape as the [Claude Code statusline](https://docs.anthropic.com/en/docs/claude-code) and the [budi-cursor](https://github.com/siropkin/budi-cursor) sibling for VS Code / Cursor.
+JetBrains IDE status-bar plugin for [budi](https://getbudi.dev). Renders your AI coding spend over the last **1 day / 7 days / 30 days** without you ever leaving the editor — same shape as the [Claude Code statusline](https://docs.anthropic.com/en/docs/claude-code).
 
 ```
 budi · $1.42 1d · $8.30 7d · $34.21 30d
@@ -114,11 +114,10 @@ To rotate `PUBLISH_TOKEN`: revoke the existing token at the link above, create a
 | [`.github/workflows/build.yml`](./.github/workflows/build.yml) | CI: build, test, verify, draft release. |
 | [`.github/workflows/release.yml`](./.github/workflows/release.yml) | CI: Marketplace publish on GitHub Release. |
 
-## Sibling repos
+## Related projects
 
-- **[siropkin/budi](https://github.com/siropkin/budi)** — Rust daemon, CLI, transcript tailer, statusline contract. Owns SQLite. The single source of truth for cost data.
-- **[siropkin/budi-cursor](https://github.com/siropkin/budi-cursor)** — VS Code / Cursor extension this plugin mirrors. Same status contract, different host.
-- **[siropkin/budi-cloud](https://github.com/siropkin/budi-cloud)** — Next.js + Supabase cloud dashboard at [`app.getbudi.dev`](https://app.getbudi.dev). Consumes the surface dimension produced here.
+- **[siropkin/budi](https://github.com/siropkin/budi)** — the daemon this plugin talks to. Rust; owns SQLite and the statusline contract.
+- **[siropkin/budi-cloud](https://github.com/siropkin/budi-cloud)** — cloud dashboard at [`app.getbudi.dev`](https://app.getbudi.dev). Opens when you click the status-bar item.
 
 ## License
 
