@@ -90,6 +90,23 @@ data class StatuslineData(
 data class ResolvedCosts(val cost1d: Double, val cost7d: Double, val cost30d: Double)
 
 /**
+ * `/health/sources` response shape. The daemon returns the on-disk paths
+ * it is tailing for the requested surface so the settings panel can show
+ * users which transcript-storage locations were discovered. Surface
+ * filtering happens server-side (parity with the `?surface=jetbrains`
+ * scoping of `/analytics/statusline`); the plugin renders what comes
+ * back as-is.
+ *
+ * Endpoint tracked daemon-side; until it lands, this fetch returns null
+ * and the settings panel renders a quiet "no sources detected" empty
+ * state (see budi-jetbrains#33).
+ */
+data class DetectedSources(
+    val surface: String? = null,
+    val paths: List<String> = emptyList(),
+)
+
+/**
  * Status-bar health state. Drives the status-bar copy and the welcome
  * notification lifecycle; no glyph rides on top of it. Mirrors
  * budi-cursor's `HealthState` 1:1 — see #232 / #314 for the design.
@@ -290,6 +307,49 @@ fun buildStatuslineUrl(
 }
 
 /**
+ * Compose `/health/sources?surface=jetbrains`. Surface filter is omitted
+ * when `includeOtherSurfaces=true` so a holistic-view user sees every
+ * surface the daemon has discovered. Mirrors `buildStatuslineUrl` so the
+ * two endpoints stay shape-consistent.
+ */
+fun buildSourcesUrl(
+    daemonUrl: String,
+    includeOtherSurfaces: Boolean = false,
+): String {
+    val base = daemonUrl.trimEnd('/')
+    if (includeOtherSurfaces) return "$base/health/sources"
+    val encoded = URLEncoder.encode(SURFACE_JETBRAINS, StandardCharsets.UTF_8)
+    return "$base/health/sources?surface=$encoded"
+}
+
+/**
+ * Render the "Detected sources" body for the settings panel. Pure
+ * function so the empty-state and path-listing branches are easy to
+ * unit-test without touching Swing.
+ *
+ * Null or empty input → quiet "No sources detected." HTML. Non-empty
+ * input → an unordered list of paths, HTML-escaped so a path containing
+ * `<` or `&` does not break the label rendering.
+ */
+fun renderDetectedSourcesHtml(sources: DetectedSources?): String {
+    val paths = sources?.paths.orEmpty().filter { it.isNotBlank() }
+    if (paths.isEmpty()) {
+        return "<html><i>No sources detected.</i></html>"
+    }
+    return paths.joinToString(
+        prefix = "<html>",
+        separator = "<br/>",
+        postfix = "</html>",
+        transform = ::escapeForHtml,
+    )
+}
+
+private fun escapeForHtml(s: String): String =
+    s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+
+/**
  * True iff `url` is an `http(s)` URL whose host is a loopback alias.
  * Non-loopback daemon URLs are rejected at config-read time so a
  * malicious project-scoped override cannot redirect the polling traffic
@@ -339,6 +399,19 @@ class BudiClient(
         includeOtherSurfaces: Boolean = false,
     ): StatuslineData? =
         getJson(buildStatuslineUrl(daemonUrl, projectDir, includeOtherSurfaces), StatuslineData::class.java)
+
+    /**
+     * Fetch the daemon's per-surface source discovery for the settings
+     * panel "Detected sources" row (budi-jetbrains#33). Returns `null`
+     * on any failure — including the endpoint not yet existing on older
+     * daemons — so the caller can collapse missing data into the same
+     * quiet empty state.
+     */
+    fun fetchSources(
+        daemonUrl: String,
+        includeOtherSurfaces: Boolean = false,
+    ): DetectedSources? =
+        getJson(buildSourcesUrl(daemonUrl, includeOtherSurfaces), DetectedSources::class.java)
 
     private fun <T> getJson(url: String, type: Class<T>): T? {
         val request = try {

@@ -1,14 +1,18 @@
 package com.github.siropkin.budijetbrains.settings
 
+import com.github.siropkin.budijetbrains.daemon.BudiClient
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_CLOUD_ENDPOINT
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_DAEMON_URL
 import com.github.siropkin.budijetbrains.daemon.isAllowedCloudEndpoint
 import com.github.siropkin.budijetbrains.daemon.isLoopbackDaemonUrl
+import com.github.siropkin.budijetbrains.daemon.renderDetectedSourcesHtml
 import com.github.siropkin.budijetbrains.poller.BudiPoller
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
@@ -40,6 +44,8 @@ class BudiConfigurable : Configurable {
     private var pollingIntervalField = settings.state.pollingIntervalMs
     private var includeOtherSurfacesField = settings.state.includeOtherSurfaces
     private var suppressUpdateNotificationField = settings.state.suppressUpdateNotification
+
+    private val detectedSourcesLabel = JBLabel(LOADING_SOURCES_HTML)
 
     override fun getDisplayName(): String = "budi"
 
@@ -92,8 +98,37 @@ class BudiConfigurable : Configurable {
                             "Auto-resets the next time the daemon's api_version catches up and then drifts stale again.",
                     )
             }
+            row("Detected sources:") {
+                cell(detectedSourcesLabel)
+                    .comment(
+                        "Filesystem paths the daemon is tailing for <code>surface=jetbrains</code>. " +
+                            "Read-only — discovery lives in budi-core. " +
+                            "Refreshed each time this settings page opens.",
+                    )
+            }
         }
+        refreshDetectedSources()
         return panel
+    }
+
+    /**
+     * Kick off an off-EDT fetch of `/health/sources` and update the
+     * label on the EDT when it returns. Failures (offline daemon,
+     * endpoint missing on older daemons, malformed payload) all fold
+     * into the quiet "no sources detected" empty state — see
+     * `renderDetectedSourcesHtml` in BudiClient.kt.
+     */
+    private fun refreshDetectedSources() {
+        detectedSourcesLabel.text = LOADING_SOURCES_HTML
+        val daemonUrl = settings.resolvedDaemonUrl()
+        val includeOtherSurfaces = settings.state.includeOtherSurfaces
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val sources = BudiClient().fetchSources(daemonUrl, includeOtherSurfaces)
+            val html = renderDetectedSourcesHtml(sources)
+            ApplicationManager.getApplication().invokeLater {
+                detectedSourcesLabel.text = html
+            }
+        }
     }
 
     override fun isModified(): Boolean {
@@ -139,6 +174,10 @@ class BudiConfigurable : Configurable {
         includeOtherSurfacesField = settings.state.includeOtherSurfaces
         suppressUpdateNotificationField = settings.state.suppressUpdateNotification
         panel.reset()
+    }
+
+    private companion object {
+        const val LOADING_SOURCES_HTML = "<html><i>Loading detected sources…</i></html>"
     }
 }
 
