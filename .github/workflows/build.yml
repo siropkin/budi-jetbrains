@@ -138,8 +138,19 @@ jobs:
           cache-read-only: true
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      #
+      # Wrapped in nick-fields/retry to absorb the Plugin Verifier 1.403
+      # `ClosedFileSystemException` cascade (issue #28): one worker thread's
+      # interrupt closes the shared `jdk.nio.zipfs` channel, and every sibling
+      # worker reading the same IDE-bundle JAR fails. The race is non-deterministic;
+      # a fresh process avoids the poisoned ZipFileSystem.
       - name: Run Plugin Verification tasks
-        run: ./gradlew verifyPlugin
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 2
+          retry_on: error
+          command: ./gradlew verifyPlugin
 
       # Collect Plugin Verifier Result
       - name: Collect Plugin Verifier Result
