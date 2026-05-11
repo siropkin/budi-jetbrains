@@ -45,6 +45,14 @@ class BudiConfigurable : Configurable {
 
     override fun createComponent(): JComponent {
         panel = panel {
+            row {
+                comment(
+                    "Status bar renders the daemon's <code>surface=jetbrains</code> rollup. " +
+                        "v0.1 tracks GitHub Copilot for JetBrains; " +
+                        "JetBrains AI Assistant (Anthropic-backed, separate JetBrains subscription) " +
+                        "is planned for v0.2 — see <a href=\"https://github.com/siropkin/budi-jetbrains/issues/32\">#32</a>.",
+                )
+            }
             row("Daemon URL:") {
                 textField()
                     .bindText({ daemonUrlField }, { daemonUrlField = it })
