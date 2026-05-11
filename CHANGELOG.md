@@ -35,3 +35,9 @@
 ### Added
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
+
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.1...HEAD
+[0.1.1]: https://github.com/siropkin/budi-jetbrains/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/siropkin/budi-jetbrains/compare/0.1.0-beta.1...0.1.0
+[0.1.0-beta.1]: https://github.com/siropkin/budi-jetbrains/compare/0.0.1-beta.2...0.1.0-beta.1
+[0.0.1-beta.2]: https://github.com/siropkin/budi-jetbrains/commits/0.0.1-beta.2
