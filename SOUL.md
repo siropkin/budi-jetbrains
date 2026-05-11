@@ -9,11 +9,10 @@ This repo is **presentation only**. It does not touch SQLite, does not compute c
 | Product | Repo | Role |
 |---------|------|------|
 | **budi-core** | [`siropkin/budi`](https://github.com/siropkin/budi) | Rust: daemon, CLI, transcript tailer, all business logic. Owns SQLite. |
-| **budi-cursor** | [`siropkin/budi-cursor`](https://github.com/siropkin/budi-cursor) | VS Code / Cursor extension (TypeScript). Sibling — same status contract on the `cursor` / `vscode` surfaces. |
 | **budi-jetbrains** | **this repo** (`siropkin/budi-jetbrains`) | IntelliJ Platform plugin (Kotlin). Renders what the daemon returns on the `jetbrains` surface. |
 | **budi-cloud** | [`siropkin/budi-cloud`](https://github.com/siropkin/budi-cloud) | Next.js + Supabase cloud dashboard at `app.getbudi.dev`. Unrelated to this plugin directly; consumes the surface dimension produced here. |
 
-Repo-split boundaries are pinned by [ADR-0086](https://github.com/siropkin/budi/blob/main/docs/adr/0086-extraction-boundaries.md) in the main repo — read it before crossing boundaries. The JetBrains surface specifically is motivated by `siropkin/budi#701` / `#702` (surface dimension) and ADR-0092 §"Out of scope" (which carved out the JetBrains sibling for the moment Cursor and the daemon stabilized).
+Repo-split boundaries are pinned by [ADR-0086](https://github.com/siropkin/budi/blob/main/docs/adr/0086-extraction-boundaries.md) in the main repo — read it before crossing boundaries. The JetBrains surface specifically is motivated by `siropkin/budi#701` / `#702` (surface dimension).
 
 ## Build & test
 
@@ -63,14 +62,14 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 ## Key files
 
 - `src/main/kotlin/.../daemon/BudiClient.kt` — fetch helpers, health-state derivation (including `FIRST_RUN`), status-text + tooltip builders, click-URL composer, surface-filter request builder. All rendering logic lives here so it is easy to unit-test.
-- `src/main/kotlin/.../poller/BudiPoller.kt` — application-scoped `Alarm` polling loop; single in-flight request, refresh coalescing, off-EDT HTTP. Mirrors `budi-cursor`'s `requestRefresh` semantics.
+- `src/main/kotlin/.../poller/BudiPoller.kt` — application-scoped `Alarm` polling loop; single in-flight request, refresh coalescing, off-EDT HTTP. Single-flight refresh: a request in flight collapses subsequent triggers into one follow-up poll.
 - `src/main/kotlin/.../state/BudiAppState.kt` — application-scoped runtime state holder (latest health, statusline, derived `HealthState`). Listener API so widgets repaint when the poller pushes a new reading.
 - `src/main/kotlin/.../settings/BudiSettings.kt` — `PersistentStateComponent` for daemon URL, cloud endpoint, polling interval, `includeOtherSurfaces`, suppress flags, and the `everSawDaemon` first-run latch.
 - `src/main/kotlin/.../settings/BudiConfigurable.kt` — `Settings → Tools → budi` page; allowlists enforced in `apply()` so off-policy values surface as a `ConfigurationException`.
 - `src/main/kotlin/.../statusbar/BudiStatusBarWidgetFactory.kt` — `StatusBarWidgetFactory` + `StatusBarWidget.TextPresentation`. One widget per open project, all reading from the application-scoped state.
 - `src/main/kotlin/.../notifier/BudiNotifier.kt` — first-run welcome balloon. "Show install command" opens a dialog with the platform-specific install one-liner.
 - `src/main/kotlin/.../notifier/BudiUpgradeNotifier.kt` — actionable upgrade prompt (`MIN_API_VERSION` gate). `evaluateUpgradePrompt` is a pure decision function, separately unit-testable.
-- `src/main/kotlin/.../install/BudiInstallCommands.kt` — canonical platform-specific install + upgrade commands (mirrors `siropkin/budi-cursor/src/installCommands.ts` and `siropkin/budi/README.md`).
+- `src/main/kotlin/.../install/BudiInstallCommands.kt` — canonical platform-specific install + upgrade commands (kept in lockstep with the install one-liners documented in `siropkin/budi/README.md`).
 - `src/main/kotlin/.../startup/BudiProjectActivity.kt` — `ProjectActivity` that boots the poller on first project open and surfaces the welcome balloon when the daemon is missing.
 - `src/main/resources/META-INF/plugin.xml` — plugin manifest; registers application services, status-bar widget factory, settings page, notification group, post-startup activity.
 - `src/test/kotlin/...` — JUnit 4 tests. Pure logic (request builder, health-state derivation, formatting, URL allowlists, upgrade-decision matrix, install commands, settings round-trip) plus an in-process `com.sun.net.httpserver` HTTP-layer test.
@@ -80,11 +79,11 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 - **No business logic.** If you catch yourself computing a cost, classifying a prompt, or rolling up tokens in this repo, stop and move it into `budi-core`. The plugin must only render what the daemon returns.
 - **No cross-surface blending.** The plugin always sends `?surface=jetbrains` and never `?provider=…`. The `includeOtherSurfaces` setting is the *only* way to drop the surface filter, and it is opt-in. Do not add summary surfaces that show blended multi-IDE totals by default — ADR-0088 §7 is explicit that scoped surfaces display their own scope only.
 - **Never read user prompts or code.** Only `/analytics/statusline` and `/health` are in scope. Do not call session-detail or message-content endpoints. Do not parse Copilot Chat / AI Assistant storage on disk — that is `budi-core`'s job.
-- **Match the Claude Code statusline byte-for-byte where possible.** Number formatting, separator (` · `), slot labels (`1d` / `7d` / `30d`), and click-through URL shape are all mirrored from `crates/budi-cli/src/commands/statusline.rs` in the main repo and `siropkin/budi-cursor/src/budiClient.ts`. Drift is a bug.
+- **Match the Claude Code statusline byte-for-byte where possible.** Number formatting, separator (` · `), slot labels (`1d` / `7d` / `30d`), and click-through URL shape are all mirrored from `crates/budi-cli/src/commands/statusline.rs` in the main repo. Drift is a bug.
 - **Graceful degradation.** If the daemon is not running, show a quiet `budi · offline` (or `budi · setup` on first run) and never spam modal errors. The first-run welcome balloon is the *one* piece of in-face UI; everything else is silent.
 - **API version skew.** The daemon's `api_version` is the contract. Bump `MIN_API_VERSION` in `BudiClient.kt` when the plugin starts depending on a new field shape, and ship the actionable upgrade prompt in the same release so users on older daemons get a fix path, not a silent break.
 - **Auto-publish is non-negotiable.** Tag → GitHub Release → `release.yml` → Marketplace. No manual zip uploads except for the very first slug-claim (JB policy).
 - **Plugin signing** is deferred until v0.2 (`siropkin/budi-jetbrains` follow-up). Marketplace does not require signed plugins; the signing keys are infra we don't want to manage during early v0.1 iteration.
-- **Public-site sync.** Any visible change (status text, click-through URL, icon, Marketplace listing copy) must be mirrored on getbudi.dev so screenshots and copy do not drift between siblings.
-- **VSIX-equivalent bundling.** The main repo's `budi integrations install --with jetbrains-plugin` path will eventually shell out to a pre-built `.zip`. When cutting a release here, refresh the bundled artifact in the main repo in lockstep — same cadence as the budi-cursor `.vsix`.
+- **Public-site sync.** Any visible change (status text, click-through URL, icon, Marketplace listing copy) must be mirrored on getbudi.dev so screenshots and copy do not drift.
+- **Zip bundling for the main repo.** The main repo's `budi integrations install --with jetbrains-plugin` path will eventually shell out to a pre-built `.zip`. When cutting a release here, refresh the bundled artifact in the main repo in lockstep.
 - **No Kotlin in `gradle.properties` business logic.** All version coordinates (platform floor, plugin version, channel routing) are pinned in `gradle.properties` and consumed via `providers.gradleProperty(...)` in `build.gradle.kts`. Channel routing is *suffix-driven*: `0.1.0-beta.1` → `beta`, `0.1.0` → `default` (Stable). Do not add hardcoded channels.
