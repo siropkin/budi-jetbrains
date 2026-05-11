@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Added
+
+- Settings panel: read-only **Detected sources** row in `Settings → Tools → budi` that lists the filesystem paths the daemon is tailing for `surface=jetbrains`. Refreshes on panel open; degrades quietly to "No sources detected" when the daemon is offline or the endpoint isn't implemented yet. Wire: `GET /health/sources?surface=jetbrains`. Daemon-side follow-up tracked in siropkin/budi#735. (#33, #36)
+- Settings panel: top-of-panel note clarifying that the status bar reflects the daemon's `surface=jetbrains` rollup, that v0.1 tracks GitHub Copilot for JetBrains, and that JetBrains AI Assistant tracking is planned for v0.2. Daemon-side follow-up tracked in siropkin/budi#736. (#32, #35)
+
+## [0.1.0]
+
 ### Changed
 
 - Promote v0.1.0-beta.1 to **Stable** channel after dogfooding. No functional changes from the beta — same feature set, same compatibility floor (IntelliJ Platform 2024.2 / 242). See `[0.1.0-beta.1]` below for the full feature list.
