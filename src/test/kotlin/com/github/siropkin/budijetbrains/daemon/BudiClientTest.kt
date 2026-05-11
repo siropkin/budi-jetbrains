@@ -211,6 +211,67 @@ class BudiClientPureLogicTest {
     }
 
     @Test
+    fun `buildSourcesUrl pins surface=jetbrains by default`() {
+        val url = buildSourcesUrl("http://127.0.0.1:7878")
+        assertEquals("http://127.0.0.1:7878/health/sources?surface=jetbrains", url)
+    }
+
+    @Test
+    fun `buildSourcesUrl omits surface when includeOtherSurfaces is true`() {
+        val url = buildSourcesUrl("http://127.0.0.1:7878", includeOtherSurfaces = true)
+        assertEquals("http://127.0.0.1:7878/health/sources", url)
+    }
+
+    @Test
+    fun `buildSourcesUrl trims trailing slash on daemon URL`() {
+        val url = buildSourcesUrl("http://127.0.0.1:7878/")
+        assertEquals("http://127.0.0.1:7878/health/sources?surface=jetbrains", url)
+    }
+
+    @Test
+    fun `renderDetectedSourcesHtml empty state on null`() {
+        assertEquals("<html><i>No sources detected.</i></html>", renderDetectedSourcesHtml(null))
+    }
+
+    @Test
+    fun `renderDetectedSourcesHtml empty state on empty paths`() {
+        assertEquals(
+            "<html><i>No sources detected.</i></html>",
+            renderDetectedSourcesHtml(DetectedSources(surface = "jetbrains", paths = emptyList())),
+        )
+    }
+
+    @Test
+    fun `renderDetectedSourcesHtml drops blank entries`() {
+        assertEquals(
+            "<html><i>No sources detected.</i></html>",
+            renderDetectedSourcesHtml(DetectedSources(paths = listOf("", "   "))),
+        )
+    }
+
+    @Test
+    fun `renderDetectedSourcesHtml lists paths on separate lines`() {
+        val rendered = renderDetectedSourcesHtml(
+            DetectedSources(
+                surface = "jetbrains",
+                paths = listOf("/Users/me/Library/Caches/JetBrains", "/Users/me/.config/JetBrains"),
+            ),
+        )
+        assertEquals(
+            "<html>/Users/me/Library/Caches/JetBrains<br/>/Users/me/.config/JetBrains</html>",
+            rendered,
+        )
+    }
+
+    @Test
+    fun `renderDetectedSourcesHtml escapes HTML metacharacters in paths`() {
+        val rendered = renderDetectedSourcesHtml(
+            DetectedSources(paths = listOf("/tmp/<weird>&dir")),
+        )
+        assertEquals("<html>/tmp/&lt;weird&gt;&amp;dir</html>", rendered)
+    }
+
+    @Test
     fun `isAllowedCloudEndpoint accepts getbudi_dev https subdomains only`() {
         assertTrue(isAllowedCloudEndpoint("https://app.getbudi.dev"))
         assertTrue(isAllowedCloudEndpoint("https://staging.app.getbudi.dev"))
@@ -303,6 +364,50 @@ class BudiClientHttpTest {
         assertEquals(1.5, data.cost1d!!, 1e-9)
         assertEquals("copilot_chat", data.activeProvider)
         assertEquals("surface=jetbrains", capturedQuery)
+    }
+
+    @Test
+    fun `fetchSources parses canonical response with surface filter`() {
+        var capturedQuery: String? = null
+        server.createContext("/health/sources") { exchange: HttpExchange ->
+            capturedQuery = exchange.requestURI.query
+            val body = """{"surface":"jetbrains","paths":["/p/one","/p/two"]}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val sources = client.fetchSources(baseUrl)
+        assertNotNull(sources)
+        assertEquals("jetbrains", sources.surface)
+        assertEquals(listOf("/p/one", "/p/two"), sources.paths)
+        assertEquals("surface=jetbrains", capturedQuery)
+    }
+
+    @Test
+    fun `fetchSources omits surface when includeOtherSurfaces`() {
+        var capturedQuery: String? = "<unset>"
+        server.createContext("/health/sources") { exchange: HttpExchange ->
+            capturedQuery = exchange.requestURI.query
+            val body = """{"paths":[]}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        client.fetchSources(baseUrl, includeOtherSurfaces = true)
+        assertNull(capturedQuery)
+    }
+
+    @Test
+    fun `fetchSources returns null when endpoint missing on older daemon`() {
+        // No handler registered for /health/sources — daemon returns 404.
+        // This is the v0.1 "endpoint not yet landed" path; renderer
+        // collapses into the quiet empty state.
+        assertNull(client.fetchSources(baseUrl))
+    }
+
+    @Test
+    fun `fetchSources returns null when daemon offline`() {
+        assertNull(client.fetchSources("http://127.0.0.1:1"))
     }
 
     @Test
