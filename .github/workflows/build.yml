@@ -145,7 +145,7 @@ jobs:
       # worker reading the same IDE-bundle JAR fails. The race is non-deterministic;
       # a fresh process avoids the poisoned ZipFileSystem.
       - name: Run Plugin Verification tasks
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 30
           max_attempts: 2
