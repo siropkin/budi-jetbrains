@@ -40,6 +40,11 @@ class BudiProjectActivity : ProjectActivity {
         // than wait the full timeout on the first project open.
         delay(1_500)
 
+        // The project may have been closed during the 1.5 s wait — skip
+        // the welcome balloon in that case so we do not push a
+        // notification at a disposed Project.
+        if (project.isDisposed) return
+
         val state = BudiAppState.getInstance().lastState
         val everSawDaemon = BudiSettings.getInstance().state.everSawDaemon
         if (state == HealthState.FIRST_RUN && !everSawDaemon) {
