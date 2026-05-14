@@ -1,3 +1,30 @@
+/**
+ * Daemon wire contract + status-bar rendering helpers.
+ *
+ * Everything in this file is a pure function or a thin HTTP client over
+ * the loopback budi daemon (`http://127.0.0.1:7878` by default). Two
+ * endpoints are consumed:
+ *
+ *   - `GET /health` → [DaemonHealth]; gates the FIRST_RUN/RED/YELLOW/GREEN
+ *     state machine via `api_version` floor [MIN_API_VERSION].
+ *   - `GET /analytics/statusline?surface=jetbrains[&project_dir=…]` →
+ *     [StatuslineData]; drives the rolling 1d/7d/30d cost line.
+ *   - `GET /health/sources?surface=jetbrains` → [DetectedSources]; only
+ *     consumed by the settings panel.
+ *
+ * The status-bar text, tooltip, and click-through URL are **byte-for-byte
+ * parity** with the Claude Code statusline (and the budi-cursor extension)
+ * — `buildStatusText`, `buildTooltip`, `clickUrl`, `formatCost`,
+ * `formatCostLine`, and `formatProviderName` here mirror the same-named
+ * functions in budi-cursor 1:1. Edits to one side must be mirrored on the
+ * other; see siropkin/budi-cursor#232 / #314 for the design.
+ *
+ * Defense-in-depth limits on the HTTP client mirror budi-cursor#42–#44:
+ * loopback-only daemon URL, https-on-getbudi.dev cloud endpoint, 3 s
+ * timeout, 64 KB body cap, 2xx + `application/json` only, `null` on any
+ * failure. Callers fold a `null` into the RED health state — there is no
+ * thrown-exception path out of [BudiClient].
+ */
 package com.github.siropkin.budijetbrains.daemon
 
 import com.google.gson.Gson

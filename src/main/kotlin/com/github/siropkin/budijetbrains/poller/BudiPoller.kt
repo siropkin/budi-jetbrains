@@ -19,6 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean
  * request at a time; user-driven refreshes coalesce with the next
  * scheduled tick rather than overlapping. Disposed alongside the
  * application — there is one poller for the lifetime of the IDE.
+ *
+ * Threading invariant: every HTTP round-trip runs on the pooled-thread
+ * [alarm], never on the EDT. The [refreshing] / [pendingRefresh] flag
+ * pair gives single-flight + coalescing semantics — concurrent
+ * `refreshNow()` calls while a request is in flight do not pile up;
+ * they collapse into a single follow-up refresh once the current one
+ * completes. [BudiAppState] listeners therefore fire from this same
+ * pooled thread (subscribers that touch UI must marshal onto the EDT
+ * themselves — see [BudiAppState]).
  */
 @Service(Service.Level.APP)
 class BudiPoller {
@@ -48,6 +57,16 @@ class BudiPoller {
         triggerRefresh()
     }
 
+    /**
+     * Re-arm the alarm. `initial = true` fires immediately so the first
+     * project-open sees a poll result inside the boot-time delay window
+     * (see [com.github.siropkin.budijetbrains.startup.BudiProjectActivity]).
+     * The interval is re-read on every tick, so a settings change to
+     * [BudiSettings.state.pollingIntervalMs] picks up on the next tick
+     * without restarting the poller. A 1 s floor avoids accidentally
+     * busy-looping if a corrupt persisted value ever slips below
+     * [com.github.siropkin.budijetbrains.settings.MIN_POLLING_INTERVAL_MS].
+     */
     private fun scheduleNext(initial: Boolean) {
         val interval = BudiSettings.getInstance().state.pollingIntervalMs.coerceAtLeast(1_000)
         alarm.cancelAllRequests()
@@ -57,9 +76,16 @@ class BudiPoller {
         }, if (initial) 0 else interval)
     }
 
+    /**
+     * Single-flight gate. Concurrent callers (scheduled tick + manual
+     * `refreshNow()`) collapse: only the first proceeds; everyone else
+     * sets [pendingRefresh] and the in-flight request, on completion,
+     * triggers exactly one follow-up. This is the coalescing invariant
+     * — never more than one in-flight request, never more than one
+     * queued.
+     */
     private fun triggerRefresh() {
         if (!refreshing.compareAndSet(false, true)) {
-            // A refresh is in flight; let it know another is wanted.
             pendingRefresh.set(true)
             return
         }

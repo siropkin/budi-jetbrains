@@ -13,6 +13,20 @@ import java.util.concurrent.CopyOnWriteArrayList
  * (one widget per open project). Application-scoped so all widgets see
  * the same numbers and the daemon is hit once per polling tick rather
  * than once per project.
+ *
+ * Thread contract:
+ *  - The cached `lastHealth` / `lastStatusline` / `lastState` fields are
+ *    `@Volatile`; readers from any thread see the most recently written
+ *    triple as a single consistent snapshot (the three writes in
+ *    [update] are atomic-enough for the widget — torn reads would at
+ *    worst paint one stale frame, which the next tick immediately
+ *    corrects).
+ *  - Listeners are invoked **synchronously on the caller's thread**.
+ *    Today the only caller is [com.github.siropkin.budijetbrains.poller.BudiPoller]
+ *    on its pooled-thread alarm, so subscribers run on a background
+ *    thread and **must** marshal onto the EDT before touching Swing.
+ *    Listener storage uses [CopyOnWriteArrayList] so concurrent
+ *    add/remove during a notify is safe.
  */
 @Service(Service.Level.APP)
 class BudiAppState {
@@ -44,9 +58,11 @@ class BudiAppState {
     }
 
     /**
-     * Subscribe to state changes. The runnable is invoked on every
-     * `update` call; subscribers are responsible for marshalling work
-     * onto the EDT if they touch UI.
+     * Subscribe to state changes. The runnable fires synchronously from
+     * the thread that called [update] — see the class-level thread
+     * contract. Listeners that touch UI must marshal onto the EDT
+     * themselves. There is no de-duplication and no fan-out ordering
+     * guarantee across multiple subscribers.
      */
     fun addListener(listener: () -> Unit) {
         listeners += listener

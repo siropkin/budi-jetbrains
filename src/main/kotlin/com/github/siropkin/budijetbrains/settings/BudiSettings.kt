@@ -31,15 +31,43 @@ internal const val MIN_POLLING_INTERVAL_MS = 3_000
  * through the URL allowlists.
  */
 class BudiSettingsState {
+    /**
+     * Daemon URL. Default: [DEFAULT_DAEMON_URL]. Valid range: any
+     * `http(s)://` URL whose host is `127.0.0.1`, `localhost`, or `[::1]`
+     * — anything else is rejected by the Configurable and silently
+     * fenced by [BudiSettings.resolvedDaemonUrl] at read time. No
+     * poller restart needed — [BudiConfigurable.apply] calls
+     * `refreshNow()` and every subsequent tick re-reads the resolved
+     * value.
+     */
     var daemonUrl: String = DEFAULT_DAEMON_URL
+
+    /**
+     * Cloud dashboard endpoint for the status-bar click-through.
+     * Default: [DEFAULT_CLOUD_ENDPOINT]. Valid range: `https://` on
+     * `getbudi.dev` (or a subdomain), no userinfo. Same fencing as
+     * [daemonUrl]. Picked up the next time the user clicks the
+     * widget — no poller restart involved.
+     */
     var cloudEndpoint: String = DEFAULT_CLOUD_ENDPOINT
+
+    /**
+     * Polling interval in milliseconds. Default:
+     * [DEFAULT_POLLING_INTERVAL_MS]. Valid range:
+     * [[MIN_POLLING_INTERVAL_MS], 600_000] (3 s … 10 min); enforced by
+     * the Configurable and re-coerced to ≥ 1 s by the poller as
+     * belt-and-suspenders. No poller restart needed — every alarm tick
+     * re-reads this field, so a change takes effect on the next
+     * scheduled refresh.
+     */
     var pollingIntervalMs: Int = DEFAULT_POLLING_INTERVAL_MS
 
     /**
      * When true, the plugin omits the `?surface=jetbrains` filter so the
      * status bar shows aggregate spend across every editor host on the
-     * machine. Off by default — the per-host scope is what makes the
-     * cloud dashboard's surface breakdown useful.
+     * machine. Default: `false` — the per-host scope is what makes the
+     * cloud dashboard's surface breakdown useful. No poller restart
+     * needed; takes effect on the next poll tick.
      */
     var includeOtherSurfaces: Boolean = false
 

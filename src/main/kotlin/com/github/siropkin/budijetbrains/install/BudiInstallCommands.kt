@@ -13,10 +13,17 @@ import com.intellij.openapi.util.SystemInfo
  * environments the welcome notification is meant to help (corporate
  * machines behind strict firewalls).
  *
- * If the canonical command changes in the main repo, bump this file in
- * lockstep with `siropkin/budi-cursor/src/installCommands.ts` so the
- * three surfaces (site, VS Code/Cursor extension, JetBrains plugin) do
- * not drift.
+ * **Sync rule.** The strings below are the authoritative copy for the
+ * JetBrains surface; any change must be mirrored — in the same
+ * release — in:
+ *   1. `siropkin/budi/README.md` (canonical user-facing docs).
+ *   2. `https://getbudi.dev` (public site copy).
+ *   3. `siropkin/budi-cursor/src/installCommands.ts` (VS Code / Cursor
+ *      sibling surface).
+ *
+ * If you find this file out of sync with any of the above, fix it
+ * here in addition to the source of truth — a drifting install command
+ * silently bricks onboarding on the affected surface.
  */
 
 internal enum class InstallPlatform { MACOS, LINUX, WINDOWS }
