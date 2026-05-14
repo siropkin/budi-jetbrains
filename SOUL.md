@@ -69,7 +69,7 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 
 - `src/main/kotlin/.../daemon/BudiClient.kt` — fetch helpers, health-state derivation (including `FIRST_RUN`), status-text + tooltip builders, click-URL composer, surface-filter request builder. All rendering logic lives here so it is easy to unit-test.
 - `src/main/kotlin/.../poller/BudiPoller.kt` — application-scoped `Alarm` polling loop; single in-flight request, refresh coalescing, off-EDT HTTP. Single-flight refresh: a request in flight collapses subsequent triggers into one follow-up poll.
-- `src/main/kotlin/.../state/BudiAppState.kt` — application-scoped runtime state holder (latest health, statusline, derived `HealthState`). Listener API so widgets repaint when the poller pushes a new reading.
+- `src/main/kotlin/.../state/BudiAppState.kt` — application-scoped runtime state holder (latest statusline, derived `HealthState`). Listener API so widgets repaint when the poller pushes a new reading.
 - `src/main/kotlin/.../settings/BudiSettings.kt` — `PersistentStateComponent` for daemon URL, cloud endpoint, polling interval, `includeOtherSurfaces`, suppress flags, and the `everSawDaemon` first-run latch.
 - `src/main/kotlin/.../settings/BudiConfigurable.kt` — `Settings → Tools → budi` page; allowlists enforced in `apply()` so off-policy values surface as a `ConfigurationException`. Also renders the read-only "Detected sources" row by calling `BudiClient.fetchSources` off-EDT on panel open.
 - `src/main/kotlin/.../statusbar/BudiStatusBarWidgetFactory.kt` — `StatusBarWidgetFactory` + `StatusBarWidget.TextPresentation`. One widget per open project, all reading from the application-scoped state.
