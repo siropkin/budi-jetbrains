@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.Messages
 import java.awt.datatransfer.StringSelection
 
 /** Notification group id — matches the registration in plugin.xml. */
-const val BUDI_NOTIFICATION_GROUP = "Budi"
+internal const val BUDI_NOTIFICATION_GROUP = "Budi"
 
 /**
  * First-run welcome notification (parity with budi-cursor#314 +
@@ -34,7 +34,7 @@ const val BUDI_NOTIFICATION_GROUP = "Budi"
  * `BudiInstallCommands.kt`. Tests assert the dialog text contains the
  * exact command verbatim.
  */
-fun showFirstRunNotification(project: Project) {
+internal fun showFirstRunNotification(project: Project) {
     val cmd = installCommandForPlatform(currentInstallPlatform())
     val notification: Notification = NotificationGroupManager.getInstance()
         .getNotificationGroup(BUDI_NOTIFICATION_GROUP)

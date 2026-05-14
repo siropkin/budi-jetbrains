@@ -20,7 +20,7 @@ import kotlinx.coroutines.delay
  *   - The poller is application-scoped (one for the IDE lifetime), so
  *     `start()` is a no-op after the first project.
  *   - The welcome surface is a sticky balloon, not a webview — see
- *     `BudiNotifier.kt` for the rationale.
+ *     `BudiFirstRunNotifier.kt` for the rationale.
  *   - We give the poller a single tick to pull state before deciding
  *     whether to show the welcome balloon; otherwise the balloon would
  *     fire on every IDE start regardless of whether the daemon comes

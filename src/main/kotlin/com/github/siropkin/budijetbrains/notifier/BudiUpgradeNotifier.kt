@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * throttle / suppress / reset logic can be tested without spinning up
  * an IDE.
  */
-data class UpgradeDecision(
+internal data class UpgradeDecision(
     /** True iff the caller should render the upgrade balloon now. */
     val showPrompt: Boolean,
     /** True iff the caller should reset its in-session "already shown" latch. */
@@ -46,7 +46,7 @@ data class UpgradeDecision(
  *  - No reading at all (daemon unreachable): do nothing — the offline
  *    state already tells the user something is wrong.
  */
-fun evaluateUpgradePrompt(
+internal fun evaluateUpgradePrompt(
     currentApiVersion: Int?,
     previousApiVersion: Int,
     sessionShown: Boolean,
@@ -105,7 +105,7 @@ class BudiUpgradeNotifier {
      * Apply the upgrade-prompt logic to the latest daemon health. Called
      * from `BudiPoller` after every successful `/health` round-trip.
      */
-    fun onHealthObserved(health: DaemonHealth?) {
+    internal fun onHealthObserved(health: DaemonHealth?) {
         val settings = BudiSettings.getInstance()
         val previousApi = settings.state.lastObservedApiVersion
         val decision = evaluateUpgradePrompt(

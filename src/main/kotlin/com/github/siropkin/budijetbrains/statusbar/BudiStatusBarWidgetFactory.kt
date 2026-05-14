@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import java.awt.event.MouseEvent
 
-const val BUDI_WIDGET_ID = "BudiStatusBarWidget"
+internal const val BUDI_WIDGET_ID = "BudiStatusBarWidget"
 
 /**
  * Status bar widget factory. Each open project gets its own widget
@@ -44,7 +44,7 @@ class BudiStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
-class BudiStatusBarWidget(private val project: Project) : StatusBarWidget {
+internal class BudiStatusBarWidget(private val project: Project) : StatusBarWidget {
 
     private var statusBar: StatusBar? = null
     private val listener: () -> Unit = ::scheduleRepaint
