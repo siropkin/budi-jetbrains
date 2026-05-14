@@ -103,7 +103,25 @@ class BudiUpgradeNotifier {
 
     /**
      * Apply the upgrade-prompt logic to the latest daemon health. Called
-     * from `BudiPoller` after every successful `/health` round-trip.
+     * from `BudiPoller` after every successful `/health` round-trip on
+     * the poller's pooled thread.
+     *
+     * The ordering of side effects matters and is deliberate:
+     *  1. Snapshot inputs into a pure [UpgradeDecision] *before* writing
+     *     anything — [evaluateUpgradePrompt] reads `previousApiVersion`,
+     *     so the persisted snapshot must reflect the pre-tick state.
+     *  2. Reset the persistent suppress first (if applicable). This is
+     *     the upward-edge transition — we want a future stale episode
+     *     to fire fresh, so clearing the latch now is correct.
+     *  3. Update `lastObservedApiVersion` only when `health != null`;
+     *     an unreachable daemon must not overwrite the cursor.
+     *  4. Reset the in-session latch if the decision says so (daemon
+     *     caught up within the same session); a regression later in the
+     *     same session will then be allowed to re-show.
+     *  5. Bail out unless the decision says "show". The
+     *     `compareAndSet(false, true)` is the second safety on top of
+     *     the in-session latch — guards against two near-simultaneous
+     *     poll completions both deciding to show.
      */
     internal fun onHealthObserved(health: DaemonHealth?) {
         val settings = BudiSettings.getInstance()

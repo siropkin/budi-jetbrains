@@ -28,6 +28,23 @@ import kotlinx.coroutines.delay
  */
 class BudiProjectActivity : ProjectActivity {
 
+    /**
+     * Boot path: start the (idempotent) application-scoped poller, wait
+     * one initial tick, then decide whether to surface the welcome
+     * balloon.
+     *
+     * Welcome balloon fires iff **all** of:
+     *  - we are not in unit-test mode (would clutter integration runs);
+     *  - the project is still alive after the 1.5 s wait (a torn-down
+     *    project can't host a balloon, and pushing one would NPE on
+     *    older platforms — see #51);
+     *  - the derived health state is `FIRST_RUN` (daemon unreachable
+     *    *and* never seen on this install); and
+     *  - the persistent `everSawDaemon` latch is still `false` (defense
+     *    against the FIRST_RUN derivation drifting from the latch — if
+     *    we have ever seen the daemon, the user is past onboarding and
+     *    should see the RED "offline" state, not the welcome prompt).
+     */
     override suspend fun execute(project: Project) {
         if (ApplicationManager.getApplication().isUnitTestMode) return
 

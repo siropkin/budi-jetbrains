@@ -140,6 +140,27 @@ class BudiConfigurable : Configurable {
             suppressUpdateNotificationField != settings.state.suppressUpdateNotification
     }
 
+    /**
+     * Persist the form. Validation is the security boundary for the two
+     * URL allowlists — the resolved-* fences in [BudiSettings] are
+     * belt-and-suspenders, but `apply()` is the only place a user can
+     * actually *set* an off-allowlist value, so we surface each
+     * violation as a [ConfigurationException] keyed to a specific
+     * field. After validation, `refreshNow()` triggers an immediate
+     * poll so the status bar reflects the new daemon URL on the
+     * next-rendered frame instead of waiting for the next scheduled
+     * tick.
+     *
+     * Exception paths:
+     *  1. **Daemon URL off-loopback** — rejected via
+     *     [isLoopbackDaemonUrl]; mirrors siropkin/budi-cursor#42.
+     *  2. **Cloud endpoint off-domain or non-https** — rejected via
+     *     [isAllowedCloudEndpoint]; mirrors siropkin/budi-cursor#43.
+     *  3. **Polling interval below the floor** — rejected against
+     *     [MIN_POLLING_INTERVAL_MS]. The IntelliJ `intTextField` UI
+     *     already clamps in its own UI, but a corrupt persisted value
+     *     could survive the round-trip; this is the durable check.
+     */
     override fun apply() {
         panel.apply()
         if (!isLoopbackDaemonUrl(daemonUrlField)) {
