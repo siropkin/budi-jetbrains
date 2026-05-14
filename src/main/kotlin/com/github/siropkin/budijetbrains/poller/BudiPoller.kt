@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @Service(Service.Level.APP)
 class BudiPoller {
-
     private val log = Logger.getInstance(BudiPoller::class.java)
     private val client = BudiClient()
 
@@ -68,7 +67,11 @@ class BudiPoller {
      * [com.github.siropkin.budijetbrains.settings.MIN_POLLING_INTERVAL_MS].
      */
     private fun scheduleNext(initial: Boolean) {
-        val interval = BudiSettings.getInstance().state.pollingIntervalMs.coerceAtLeast(1_000)
+        val interval =
+            BudiSettings
+                .getInstance()
+                .state.pollingIntervalMs
+                .coerceAtLeast(1_000)
         alarm.cancelAllRequests()
         alarm.addRequest({
             triggerRefresh()
@@ -103,15 +106,19 @@ class BudiPoller {
         val settings = BudiSettings.getInstance()
         val daemonUrl = settings.resolvedDaemonUrl()
         val includeOtherSurfaces = settings.state.includeOtherSurfaces
-        val projectDir = ProjectManager.getInstance().openProjects
-            .firstOrNull { !it.isDisposed }
-            ?.basePath
+        val projectDir =
+            ProjectManager
+                .getInstance()
+                .openProjects
+                .firstOrNull { !it.isDisposed }
+                ?.basePath
         val health = client.fetchHealth(daemonUrl)
-        val statusline = client.fetchStatusline(
-            daemonUrl,
-            projectDir,
-            includeOtherSurfaces,
-        )
+        val statusline =
+            client.fetchStatusline(
+                daemonUrl,
+                projectDir,
+                includeOtherSurfaces,
+            )
         if (health != null && !settings.state.everSawDaemon) {
             settings.updateAndPersist { everSawDaemon = true }
             log.info("First daemon detection — leaving FIRST_RUN.")
@@ -121,7 +128,6 @@ class BudiPoller {
     }
 
     companion object {
-        fun getInstance(): BudiPoller =
-            ApplicationManager.getApplication().getService(BudiPoller::class.java)
+        fun getInstance(): BudiPoller = ApplicationManager.getApplication().getService(BudiPoller::class.java)
     }
 }

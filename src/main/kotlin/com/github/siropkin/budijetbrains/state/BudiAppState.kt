@@ -30,7 +30,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 @Service(Service.Level.APP)
 class BudiAppState {
-
     @Volatile
     internal var lastHealth: DaemonHealth? = null
         private set
@@ -50,7 +49,11 @@ class BudiAppState {
      * `everSawDaemon` is threaded through from the persistent settings
      * so the FIRST_RUN → RED transition mirrors budi-cursor.
      */
-    internal fun update(health: DaemonHealth?, statusline: StatuslineData?, everSawDaemon: Boolean) {
+    internal fun update(
+        health: DaemonHealth?,
+        statusline: StatuslineData?,
+        everSawDaemon: Boolean,
+    ) {
         lastHealth = health
         lastStatusline = statusline
         lastState = deriveHealthState(health, statusline, everSawDaemon)
@@ -73,7 +76,6 @@ class BudiAppState {
     }
 
     companion object {
-        fun getInstance(): BudiAppState =
-            ApplicationManager.getApplication().getService(BudiAppState::class.java)
+        fun getInstance(): BudiAppState = ApplicationManager.getApplication().getService(BudiAppState::class.java)
     }
 }

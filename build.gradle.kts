@@ -5,6 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.intellij.platform")
     id("org.jetbrains.changelog")
+    id("org.jlleitschuh.gradle.ktlint")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -72,13 +74,33 @@ intellijPlatform {
         // Per issue #4: tag v0.1.x releases as `vX.Y.Z-beta.N` until a
         // friendly user confirms daemon-path detection on a non-dev
         // machine; after that, drop the suffix to promote to Stable.
-        channels = providers.gradleProperty("pluginVersion").map { v ->
-            listOf(v.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
-        }
+        channels =
+            providers.gradleProperty("pluginVersion").map { v ->
+                listOf(v.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+            }
     }
 }
 
 changelog {
     groups.empty()
     repositoryUrl = providers.gradleProperty("pluginRepositoryUrl")
+}
+
+ktlint {
+    version = "1.4.1"
+    verbose = true
+    filter {
+        exclude { it.file.path.contains("build/") }
+    }
+}
+
+detekt {
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    baseline = file("$rootDir/config/detekt/detekt-baseline.xml")
+    source.setFrom(files("src/main/kotlin", "src/test/kotlin"))
+}
+
+tasks.named("check") {
+    dependsOn("ktlintCheck", "detekt")
 }

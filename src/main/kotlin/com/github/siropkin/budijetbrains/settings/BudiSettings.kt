@@ -112,7 +112,6 @@ class BudiSettingsState {
     storages = [Storage("budi.xml")],
 )
 class BudiSettings : PersistentStateComponent<BudiSettingsState> {
-
     private var state = BudiSettingsState()
 
     override fun getState(): BudiSettingsState = state
@@ -146,7 +145,6 @@ class BudiSettings : PersistentStateComponent<BudiSettingsState> {
     }
 
     companion object {
-        fun getInstance(): BudiSettings =
-            ApplicationManager.getApplication().getService(BudiSettings::class.java)
+        fun getInstance(): BudiSettings = ApplicationManager.getApplication().getService(BudiSettings::class.java)
     }
 }

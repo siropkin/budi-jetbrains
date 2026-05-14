@@ -38,32 +38,36 @@ internal data class InstallCommand(
     val command: String,
 )
 
-internal val MACOS_COMMAND = InstallCommand(
-    platform = InstallPlatform.MACOS,
-    label = "macOS",
-    shell = "bash",
-    command = "brew install siropkin/budi/budi",
-)
+internal val MACOS_COMMAND =
+    InstallCommand(
+        platform = InstallPlatform.MACOS,
+        label = "macOS",
+        shell = "bash",
+        command = "brew install siropkin/budi/budi",
+    )
 
-internal val LINUX_COMMAND = InstallCommand(
-    platform = InstallPlatform.LINUX,
-    label = "Linux",
-    shell = "bash",
-    command = "curl -fsSL https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.sh | bash",
-)
+internal val LINUX_COMMAND =
+    InstallCommand(
+        platform = InstallPlatform.LINUX,
+        label = "Linux",
+        shell = "bash",
+        command = "curl -fsSL https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.sh | bash",
+    )
 
-internal val WINDOWS_COMMAND = InstallCommand(
-    platform = InstallPlatform.WINDOWS,
-    label = "Windows (PowerShell)",
-    shell = "powershell",
-    command = "irm https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.ps1 | iex",
-)
+internal val WINDOWS_COMMAND =
+    InstallCommand(
+        platform = InstallPlatform.WINDOWS,
+        label = "Windows (PowerShell)",
+        shell = "powershell",
+        command = "irm https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.ps1 | iex",
+    )
 
-internal fun installCommandForPlatform(platform: InstallPlatform): InstallCommand = when (platform) {
-    InstallPlatform.MACOS -> MACOS_COMMAND
-    InstallPlatform.LINUX -> LINUX_COMMAND
-    InstallPlatform.WINDOWS -> WINDOWS_COMMAND
-}
+internal fun installCommandForPlatform(platform: InstallPlatform): InstallCommand =
+    when (platform) {
+        InstallPlatform.MACOS -> MACOS_COMMAND
+        InstallPlatform.LINUX -> LINUX_COMMAND
+        InstallPlatform.WINDOWS -> WINDOWS_COMMAND
+    }
 
 /**
  * Platform-appropriate upgrade command for an already-installed daemon
@@ -75,14 +79,16 @@ internal fun installCommandForPlatform(platform: InstallPlatform): InstallComman
  * preferred when the daemon is reachable, this one is the platform
  * fallback for the broken-daemon case.
  */
-internal fun upgradeCommandForPlatform(platform: InstallPlatform): String = when (platform) {
-    InstallPlatform.MACOS -> "brew upgrade siropkin/budi/budi"
-    InstallPlatform.LINUX, InstallPlatform.WINDOWS -> installCommandForPlatform(platform).command
-}
+internal fun upgradeCommandForPlatform(platform: InstallPlatform): String =
+    when (platform) {
+        InstallPlatform.MACOS -> "brew upgrade siropkin/budi/budi"
+        InstallPlatform.LINUX, InstallPlatform.WINDOWS -> installCommandForPlatform(platform).command
+    }
 
 /** Detect the current host OS via IntelliJ's `SystemInfo`. */
-internal fun currentInstallPlatform(): InstallPlatform = when {
-    SystemInfo.isWindows -> InstallPlatform.WINDOWS
-    SystemInfo.isMac -> InstallPlatform.MACOS
-    else -> InstallPlatform.LINUX
-}
+internal fun currentInstallPlatform(): InstallPlatform =
+    when {
+        SystemInfo.isWindows -> InstallPlatform.WINDOWS
+        SystemInfo.isMac -> InstallPlatform.MACOS
+        else -> InstallPlatform.LINUX
+    }
