@@ -26,7 +26,6 @@ internal const val BUDI_WIDGET_ID = "BudiStatusBarWidget"
  * widgets are presentation only, the poller does the work.
  */
 class BudiStatusBarWidgetFactory : StatusBarWidgetFactory {
-
     override fun getId(): String = BUDI_WIDGET_ID
 
     override fun getDisplayName(): String = "budi"
@@ -44,8 +43,9 @@ class BudiStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
-internal class BudiStatusBarWidget(private val project: Project) : StatusBarWidget {
-
+internal class BudiStatusBarWidget(
+    private val project: Project,
+) : StatusBarWidget {
     private var statusBar: StatusBar? = null
     private val listener: () -> Unit = ::scheduleRepaint
 
@@ -55,42 +55,46 @@ internal class BudiStatusBarWidget(private val project: Project) : StatusBarWidg
     // compiler to synthesize bridges for the deprecated
     // getPresentation(PlatformType) overload, which the JetBrains
     // Marketplace plugin verifier flags as deprecated API usage.
-    private val presentation = object : StatusBarWidget.TextPresentation {
-        override fun getText(): String =
-            buildStatusText(BudiAppState.getInstance().lastState, BudiAppState.getInstance().lastStatusline)
+    private val presentation =
+        object : StatusBarWidget.TextPresentation {
+            override fun getText(): String =
+                buildStatusText(
+                    BudiAppState.getInstance().lastState,
+                    BudiAppState.getInstance().lastStatusline,
+                )
 
-        override fun getAlignment(): Float = 0f
+            override fun getAlignment(): Float = 0f
 
-        override fun getTooltipText(): String =
-            buildTooltip(
-                BudiAppState.getInstance().lastState,
-                BudiAppState.getInstance().lastStatusline,
-                BudiSettings.getInstance().resolvedCloudEndpoint(),
-            )
+            override fun getTooltipText(): String =
+                buildTooltip(
+                    BudiAppState.getInstance().lastState,
+                    BudiAppState.getInstance().lastStatusline,
+                    BudiSettings.getInstance().resolvedCloudEndpoint(),
+                )
 
-        /**
-         * Click handler. Mirrors budi-cursor's `budi.statusBarClick`:
-         *
-         * - FIRST_RUN: open the welcome notification (drops the user into
-         *   the install flow — same surface they see at IDE start).
-         * - everything else: open the cloud endpoint via the system browser.
-         */
-        override fun getClickConsumer(): com.intellij.util.Consumer<MouseEvent> =
-            com.intellij.util.Consumer {
-                val state = BudiAppState.getInstance().lastState
-                if (state == HealthState.FIRST_RUN) {
-                    showFirstRunNotification(project)
-                    return@Consumer
+            /**
+             * Click handler. Mirrors budi-cursor's `budi.statusBarClick`:
+             *
+             * - FIRST_RUN: open the welcome notification (drops the user into
+             *   the install flow — same surface they see at IDE start).
+             * - everything else: open the cloud endpoint via the system browser.
+             */
+            override fun getClickConsumer(): com.intellij.util.Consumer<MouseEvent> =
+                com.intellij.util.Consumer {
+                    val state = BudiAppState.getInstance().lastState
+                    if (state == HealthState.FIRST_RUN) {
+                        showFirstRunNotification(project)
+                        return@Consumer
+                    }
+                    val settings = BudiSettings.getInstance()
+                    val url = clickUrl(settings.resolvedCloudEndpoint(), BudiAppState.getInstance().lastStatusline)
+                    BrowserUtil.browse(url)
+                    // A click is also a hint that the user wants fresh data;
+                    // poke the poller so the widget updates ASAP after they
+                    // come back from the browser.
+                    BudiPoller.getInstance().refreshNow()
                 }
-                val settings = BudiSettings.getInstance()
-                val url = clickUrl(settings.resolvedCloudEndpoint(), BudiAppState.getInstance().lastStatusline)
-                BrowserUtil.browse(url)
-                // A click is also a hint that the user wants fresh data;
-                // poke the poller so the widget updates ASAP after they
-                // come back from the browser.
-                BudiPoller.getInstance().refreshNow()
-            }
-    }
+        }
 
     override fun ID(): String = BUDI_WIDGET_ID
 

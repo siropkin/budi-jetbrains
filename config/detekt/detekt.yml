@@ -1,0 +1,56 @@
+# Detekt configuration for budi-jetbrains.
+#
+# Inherits the default ruleset (see `buildUponDefaultConfig = true` in
+# build.gradle.kts). The overrides below disable a handful of rules that
+# don't earn their keep in a small single-author plugin codebase that
+# talks HTTP to a local daemon and renders an IntelliJ Platform widget.
+#
+# When in doubt, prefer to *fix* findings rather than silence rules here.
+
+complexity:
+  TooManyFunctions:
+    # The IntelliJ `Configurable` and the JSON parser in `BudiClient`
+    # both exceed the default cap legitimately. Single-author codebase
+    # this size; the readability tradeoff isn't worth the rule.
+    active: false
+  LongMethod:
+    # `BudiClient` parsing and `BudiConfigurable.apply` are long but
+    # linear and read top-to-bottom; splitting hurts more than it helps.
+    threshold: 80
+
+style:
+  MagicNumber:
+    # HTTP timeouts, polling intervals, port numbers (7878), and color
+    # thresholds make up most of the hits — all self-documenting in
+    # context.
+    active: false
+  MaxLineLength:
+    maxLineLength: 140
+    excludePackageStatements: true
+    excludeImportStatements: true
+  ReturnCount:
+    # The configurable's `apply()` validates several fields and bails
+    # early on each one — that's clearer than a single nested check.
+    max: 6
+  ForbiddenComment:
+    # We track TODOs and link them to issues; detekt doesn't need to
+    # police them.
+    active: false
+  WildcardImport:
+    active: true
+    excludeImports:
+      - java.util.*
+
+naming:
+  FunctionNaming:
+    # JUnit test method names use snake_case with backticks; let those
+    # through.
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+
+exceptions:
+  TooGenericExceptionCaught:
+    # We deliberately swallow broad `Exception` in poller/notifier
+    # paths so a daemon-side surprise can't crash the IDE.
+    active: false
+  SwallowedException:
+    active: false

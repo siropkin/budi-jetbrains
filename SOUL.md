@@ -23,9 +23,12 @@ Business logic lives in `budi-core`; this repo only renders what the daemon retu
 ./gradlew buildPlugin     # produce build/distributions/budi-<version>.zip
 ./gradlew runIde          # launch a sandbox IDE with the plugin loaded
 ./gradlew test            # JUnit tests
-./gradlew check           # tests + plugin-structure verifier
+./gradlew check           # tests + plugin-structure verifier + ktlint + detekt
+./gradlew ktlintFormat    # auto-fix ktlint style violations before pushing
 ./gradlew verifyPlugin    # IntelliJ Plugin Verifier across the configured IDE matrix
 ```
+
+Static analysis is wired into `check`: `ktlint` (style) + `detekt` (smells). detekt findings carried over from before the rule landed are pinned in `config/detekt/detekt-baseline.xml` — track that file toward zero rather than letting it grow.
 
 Marketplace publishing is driven from `.github/workflows/release.yml` (tag → GitHub Release → `gradle publishPlugin`); there is no local `publish` script. Auto-publish is the **only** way the plugin reaches the Marketplace — manual web-UI uploads are explicitly disallowed except for the very first slug-claim.
 

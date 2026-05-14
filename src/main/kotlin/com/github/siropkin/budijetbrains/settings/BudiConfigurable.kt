@@ -35,7 +35,6 @@ import javax.swing.JComponent
  * mode (drops the `?surface=jetbrains` filter).
  */
 class BudiConfigurable : Configurable {
-
     private val settings = BudiSettings.getInstance()
     private lateinit var panel: DialogPanel
 
@@ -50,63 +49,64 @@ class BudiConfigurable : Configurable {
     override fun getDisplayName(): String = "budi"
 
     override fun createComponent(): JComponent {
-        panel = panel {
-            row {
-                comment(
-                    "Status bar renders the daemon's <code>surface=jetbrains</code> rollup. " +
-                        "v0.1 tracks GitHub Copilot for JetBrains; " +
-                        "JetBrains AI Assistant (Anthropic-backed, separate JetBrains subscription) " +
-                        "is planned for v0.2 — see <a href=\"https://github.com/siropkin/budi-jetbrains/issues/32\">#32</a>.",
-                )
-            }
-            row("Daemon URL:") {
-                textField()
-                    .bindText({ daemonUrlField }, { daemonUrlField = it })
-                    .columns(40)
-                    .comment(
-                        "Loopback only — 127.0.0.1, localhost, or [::1]. " +
-                            "Off-loopback values are rejected at runtime and fall back to $DEFAULT_DAEMON_URL.",
+        panel =
+            panel {
+                row {
+                    comment(
+                        "Status bar renders the daemon's <code>surface=jetbrains</code> rollup. " +
+                            "v0.1 tracks GitHub Copilot for JetBrains; " +
+                            "JetBrains AI Assistant (Anthropic-backed, separate JetBrains subscription) " +
+                            "is planned for v0.2 — see <a href=\"https://github.com/siropkin/budi-jetbrains/issues/32\">#32</a>.",
                     )
+                }
+                row("Daemon URL:") {
+                    textField()
+                        .bindText({ daemonUrlField }, { daemonUrlField = it })
+                        .columns(40)
+                        .comment(
+                            "Loopback only — 127.0.0.1, localhost, or [::1]. " +
+                                "Off-loopback values are rejected at runtime and fall back to $DEFAULT_DAEMON_URL.",
+                        )
+                }
+                row("Cloud endpoint:") {
+                    textField()
+                        .bindText({ cloudEndpointField }, { cloudEndpointField = it })
+                        .columns(40)
+                        .comment(
+                            "https on getbudi.dev (or a subdomain). Off-domain values fall back to $DEFAULT_CLOUD_ENDPOINT.",
+                        )
+                }
+                row("Polling interval (ms):") {
+                    intTextField(IntRange(MIN_POLLING_INTERVAL_MS, 600_000))
+                        .bindIntText({ pollingIntervalField }, { pollingIntervalField = it })
+                        .columns(8)
+                        .comment("How often to refresh the status bar. Minimum ${MIN_POLLING_INTERVAL_MS / 1000}s.")
+                }
+                row {
+                    cell(JBCheckBox("Include other surfaces (drop the ?surface=jetbrains filter)"))
+                        .bindSelected({ includeOtherSurfacesField }, { includeOtherSurfacesField = it })
+                        .comment(
+                            "When checked, the status bar shows your aggregate spend across every editor host. " +
+                                "Off by default — the per-host scope is what makes the cloud dashboard's surface breakdown useful.",
+                        )
+                }
+                row {
+                    cell(JBCheckBox("Suppress \"daemon needs an update\" notification"))
+                        .bindSelected({ suppressUpdateNotificationField }, { suppressUpdateNotificationField = it })
+                        .comment(
+                            "When checked, the upgrade prompt is silenced for the current stale-version episode. " +
+                                "Auto-resets the next time the daemon's api_version catches up and then drifts stale again.",
+                        )
+                }
+                row("Detected sources:") {
+                    cell(detectedSourcesLabel)
+                        .comment(
+                            "Filesystem paths the daemon is tailing for <code>surface=jetbrains</code>. " +
+                                "Read-only — discovery lives in budi-core. " +
+                                "Refreshed each time this settings page opens.",
+                        )
+                }
             }
-            row("Cloud endpoint:") {
-                textField()
-                    .bindText({ cloudEndpointField }, { cloudEndpointField = it })
-                    .columns(40)
-                    .comment(
-                        "https on getbudi.dev (or a subdomain). Off-domain values fall back to $DEFAULT_CLOUD_ENDPOINT.",
-                    )
-            }
-            row("Polling interval (ms):") {
-                intTextField(IntRange(MIN_POLLING_INTERVAL_MS, 600_000))
-                    .bindIntText({ pollingIntervalField }, { pollingIntervalField = it })
-                    .columns(8)
-                    .comment("How often to refresh the status bar. Minimum ${MIN_POLLING_INTERVAL_MS / 1000}s.")
-            }
-            row {
-                cell(JBCheckBox("Include other surfaces (drop the ?surface=jetbrains filter)"))
-                    .bindSelected({ includeOtherSurfacesField }, { includeOtherSurfacesField = it })
-                    .comment(
-                        "When checked, the status bar shows your aggregate spend across every editor host. " +
-                            "Off by default — the per-host scope is what makes the cloud dashboard's surface breakdown useful.",
-                    )
-            }
-            row {
-                cell(JBCheckBox("Suppress \"daemon needs an update\" notification"))
-                    .bindSelected({ suppressUpdateNotificationField }, { suppressUpdateNotificationField = it })
-                    .comment(
-                        "When checked, the upgrade prompt is silenced for the current stale-version episode. " +
-                            "Auto-resets the next time the daemon's api_version catches up and then drifts stale again.",
-                    )
-            }
-            row("Detected sources:") {
-                cell(detectedSourcesLabel)
-                    .comment(
-                        "Filesystem paths the daemon is tailing for <code>surface=jetbrains</code>. " +
-                            "Read-only — discovery lives in budi-core. " +
-                            "Refreshed each time this settings page opens.",
-                    )
-            }
-        }
         refreshDetectedSources()
         return panel
     }
@@ -201,4 +201,3 @@ class BudiConfigurable : Configurable {
         const val LOADING_SOURCES_HTML = "<html><i>Loading detected sources…</i></html>"
     }
 }
-

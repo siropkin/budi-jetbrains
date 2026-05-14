@@ -9,7 +9,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class BudiSettingsStateTest {
-
     @Test
     fun `defaults match budi-cursor's package_json defaults`() {
         val s = BudiSettingsState()
@@ -32,16 +31,21 @@ class BudiSettingsStateTest {
 
     @Test
     fun `XmlSerializerUtil round-trip preserves all fields`() {
-        val original = BudiSettingsState().apply {
-            daemonUrl = "http://localhost:9999"
-            cloudEndpoint = "https://staging.app.getbudi.dev"
-            pollingIntervalMs = 30_000
-            includeOtherSurfaces = true
-            everSawDaemon = true
-        }
-        val element = com.intellij.util.xmlb.XmlSerializer.serialize(original)
+        val original =
+            BudiSettingsState().apply {
+                daemonUrl = "http://localhost:9999"
+                cloudEndpoint = "https://staging.app.getbudi.dev"
+                pollingIntervalMs = 30_000
+                includeOtherSurfaces = true
+                everSawDaemon = true
+            }
+        val element =
+            com.intellij.util.xmlb.XmlSerializer
+                .serialize(original)
         assertNotNull(element)
-        val restored = com.intellij.util.xmlb.XmlSerializer.deserialize(element, BudiSettingsState::class.java)
+        val restored =
+            com.intellij.util.xmlb.XmlSerializer
+                .deserialize(element, BudiSettingsState::class.java)
         assertEquals(original.daemonUrl, restored.daemonUrl)
         assertEquals(original.cloudEndpoint, restored.cloudEndpoint)
         assertEquals(original.pollingIntervalMs, restored.pollingIntervalMs)
@@ -56,11 +60,14 @@ class BudiSettingsStateTest {
         // back to its default rather than throw.
         val element = org.jdom.Element("BudiSettings")
         element.addContent(
-            org.jdom.Element("option")
+            org.jdom
+                .Element("option")
                 .setAttribute("name", "daemonUrl")
                 .setAttribute("value", "http://127.0.0.1:7878"),
         )
-        val restored = com.intellij.util.xmlb.XmlSerializer.deserialize(element, BudiSettingsState::class.java)
+        val restored =
+            com.intellij.util.xmlb.XmlSerializer
+                .deserialize(element, BudiSettingsState::class.java)
         assertEquals("http://127.0.0.1:7878", restored.daemonUrl)
         assertFalse(restored.includeOtherSurfaces)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, restored.pollingIntervalMs)

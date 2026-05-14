@@ -4,7 +4,6 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 class BudiInstallCommandsTest {
-
     @Test
     fun `macOS install command is the canonical Homebrew one-liner`() {
         val cmd = installCommandForPlatform(InstallPlatform.MACOS)

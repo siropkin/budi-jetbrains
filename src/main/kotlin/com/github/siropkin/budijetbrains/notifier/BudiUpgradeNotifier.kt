@@ -56,9 +56,10 @@ internal fun evaluateUpgradePrompt(
     if (currentApiVersion == null) {
         return UpgradeDecision(showPrompt = false, resetSessionShown = false, resetPersistentSuppress = false)
     }
-    val resetPersistentSuppress = currentApiVersion >= floor &&
-        previousApiVersion < floor &&
-        persistentSuppress
+    val resetPersistentSuppress =
+        currentApiVersion >= floor &&
+            previousApiVersion < floor &&
+            persistentSuppress
     if (currentApiVersion >= floor) {
         return UpgradeDecision(
             showPrompt = false,
@@ -98,7 +99,6 @@ internal fun evaluateUpgradePrompt(
  */
 @Service(Service.Level.APP)
 class BudiUpgradeNotifier {
-
     private val sessionShown = AtomicBoolean(false)
 
     /**
@@ -126,12 +126,13 @@ class BudiUpgradeNotifier {
     internal fun onHealthObserved(health: DaemonHealth?) {
         val settings = BudiSettings.getInstance()
         val previousApi = settings.state.lastObservedApiVersion
-        val decision = evaluateUpgradePrompt(
-            currentApiVersion = health?.apiVersion,
-            previousApiVersion = previousApi,
-            sessionShown = sessionShown.get(),
-            persistentSuppress = settings.state.suppressUpdateNotification,
-        )
+        val decision =
+            evaluateUpgradePrompt(
+                currentApiVersion = health?.apiVersion,
+                previousApiVersion = previousApi,
+                sessionShown = sessionShown.get(),
+                persistentSuppress = settings.state.suppressUpdateNotification,
+            )
         if (decision.resetPersistentSuppress) {
             settings.updateAndPersist { suppressUpdateNotification = false }
         }
@@ -148,30 +149,44 @@ class BudiUpgradeNotifier {
         showUpgradePrompt(project, health!!)
     }
 
-    private fun pickProjectForBalloon(): Project? =
-        ProjectManager.getInstance().openProjects.firstOrNull { !it.isDisposed }
+    private fun pickProjectForBalloon(): Project? = ProjectManager.getInstance().openProjects.firstOrNull { !it.isDisposed }
 
-    private fun showUpgradePrompt(project: Project, health: DaemonHealth) {
-        val notification: Notification = NotificationGroupManager.getInstance()
-            .getNotificationGroup(BUDI_NOTIFICATION_GROUP)
-            .createNotification(
-                "budi daemon needs an update",
-                "Daemon api_version <b>${health.apiVersion}</b> is older than this plugin requires (<b>$MIN_API_VERSION</b>). " +
-                    "Update budi to keep the status bar working.",
-                NotificationType.WARNING,
-            )
+    private fun showUpgradePrompt(
+        project: Project,
+        health: DaemonHealth,
+    ) {
+        val notification: Notification =
+            NotificationGroupManager
+                .getInstance()
+                .getNotificationGroup(BUDI_NOTIFICATION_GROUP)
+                .createNotification(
+                    "budi daemon needs an update",
+                    "Daemon api_version <b>${health.apiVersion}</b> is older than this plugin requires (<b>$MIN_API_VERSION</b>). " +
+                        "Update budi to keep the status bar working.",
+                    NotificationType.WARNING,
+                )
 
-        notification.addAction(object : NotificationAction("Show update command") {
-            override fun actionPerformed(e: AnActionEvent, n: Notification) {
-                showUpgradeDialog(project)
-            }
-        })
-        notification.addAction(object : NotificationAction("Don't show again") {
-            override fun actionPerformed(e: AnActionEvent, n: Notification) {
-                BudiSettings.getInstance().updateAndPersist { suppressUpdateNotification = true }
-                n.expire()
-            }
-        })
+        notification.addAction(
+            object : NotificationAction("Show update command") {
+                override fun actionPerformed(
+                    e: AnActionEvent,
+                    n: Notification,
+                ) {
+                    showUpgradeDialog(project)
+                }
+            },
+        )
+        notification.addAction(
+            object : NotificationAction("Don't show again") {
+                override fun actionPerformed(
+                    e: AnActionEvent,
+                    n: Notification,
+                ) {
+                    BudiSettings.getInstance().updateAndPersist { suppressUpdateNotification = true }
+                    n.expire()
+                }
+            },
+        )
 
         ApplicationManager.getApplication().invokeLater {
             notification.notify(project)
@@ -181,19 +196,21 @@ class BudiUpgradeNotifier {
     private fun showUpgradeDialog(project: Project) {
         val platform = currentInstallPlatform()
         val platformCommand = upgradeCommandForPlatform(platform)
-        val message = buildString {
-            append("Run either of the following in a terminal:\n\n")
-            append("Universal:\n  budi update\n\n")
-            append("Platform fallback (${platform.name.lowercase().replaceFirstChar { it.uppercase() }}):\n  $platformCommand\n")
-        }
-        val choice = Messages.showDialog(
-            project,
-            message,
-            "Update budi daemon",
-            arrayOf("Copy `budi update`", "Copy platform command", "Close"),
-            0,
-            Messages.getInformationIcon(),
-        )
+        val message =
+            buildString {
+                append("Run either of the following in a terminal:\n\n")
+                append("Universal:\n  budi update\n\n")
+                append("Platform fallback (${platform.name.lowercase().replaceFirstChar { it.uppercase() }}):\n  $platformCommand\n")
+            }
+        val choice =
+            Messages.showDialog(
+                project,
+                message,
+                "Update budi daemon",
+                arrayOf("Copy `budi update`", "Copy platform command", "Close"),
+                0,
+                Messages.getInformationIcon(),
+            )
         when (choice) {
             0 -> CopyPasteManager.getInstance().setContents(StringSelection("budi update"))
             1 -> CopyPasteManager.getInstance().setContents(StringSelection(platformCommand))
@@ -202,7 +219,6 @@ class BudiUpgradeNotifier {
     }
 
     companion object {
-        fun getInstance(): BudiUpgradeNotifier =
-            ApplicationManager.getApplication().getService(BudiUpgradeNotifier::class.java)
+        fun getInstance(): BudiUpgradeNotifier = ApplicationManager.getApplication().getService(BudiUpgradeNotifier::class.java)
     }
 }

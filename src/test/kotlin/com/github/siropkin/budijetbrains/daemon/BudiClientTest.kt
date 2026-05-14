@@ -7,19 +7,23 @@ import org.junit.Before
 import org.junit.Test
 import java.net.InetSocketAddress
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 
 class BudiClientPureLogicTest {
-
     @Test
     fun `resolveCosts prefers canonical fields over 8_0 aliases`() {
-        val data = StatuslineData(
-            cost1d = 1.23, cost7d = 4.56, cost30d = 7.89,
-            todayCost = 99.0, weekCost = 99.0, monthCost = 99.0,
-        )
+        val data =
+            StatuslineData(
+                cost1d = 1.23,
+                cost7d = 4.56,
+                cost30d = 7.89,
+                todayCost = 99.0,
+                weekCost = 99.0,
+                monthCost = 99.0,
+            )
         val resolved = resolveCosts(data)
         assertEquals(1.23, resolved.cost1d, 1e-9)
         assertEquals(4.56, resolved.cost7d, 1e-9)
@@ -186,11 +190,12 @@ class BudiClientPureLogicTest {
 
     @Test
     fun `buildStatuslineUrl appends project_dir`() {
-        val url = buildStatuslineUrl(
-            "http://127.0.0.1:7878",
-            projectDir = "/tmp/some project",
-            includeOtherSurfaces = false,
-        )
+        val url =
+            buildStatuslineUrl(
+                "http://127.0.0.1:7878",
+                projectDir = "/tmp/some project",
+                includeOtherSurfaces = false,
+            )
         // "/tmp/some project" → URL-encoded.
         assertEquals(
             "http://127.0.0.1:7878/analytics/statusline?surface=jetbrains&project_dir=%2Ftmp%2Fsome+project",
@@ -251,12 +256,13 @@ class BudiClientPureLogicTest {
 
     @Test
     fun `renderDetectedSourcesHtml lists paths on separate lines`() {
-        val rendered = renderDetectedSourcesHtml(
-            DetectedSources(
-                surface = "jetbrains",
-                paths = listOf("/Users/me/Library/Caches/JetBrains", "/Users/me/.config/JetBrains"),
-            ),
-        )
+        val rendered =
+            renderDetectedSourcesHtml(
+                DetectedSources(
+                    surface = "jetbrains",
+                    paths = listOf("/Users/me/Library/Caches/JetBrains", "/Users/me/.config/JetBrains"),
+                ),
+            )
         assertEquals(
             "<html>/Users/me/Library/Caches/JetBrains<br/>/Users/me/.config/JetBrains</html>",
             rendered,
@@ -265,9 +271,10 @@ class BudiClientPureLogicTest {
 
     @Test
     fun `renderDetectedSourcesHtml escapes HTML metacharacters in paths`() {
-        val rendered = renderDetectedSourcesHtml(
-            DetectedSources(paths = listOf("/tmp/<weird>&dir")),
-        )
+        val rendered =
+            renderDetectedSourcesHtml(
+                DetectedSources(paths = listOf("/tmp/<weird>&dir")),
+            )
         assertEquals("<html>/tmp/&lt;weird&gt;&amp;dir</html>", rendered)
     }
 
@@ -301,7 +308,12 @@ class BudiClientHttpTest {
         server.stop(0)
     }
 
-    private fun handle(path: String, status: Int, contentType: String?, body: ByteArray) {
+    private fun handle(
+        path: String,
+        status: Int,
+        contentType: String?,
+        body: ByteArray,
+    ) {
         server.createContext(path) { exchange: HttpExchange ->
             if (contentType != null) {
                 exchange.responseHeaders.add("Content-Type", contentType)
@@ -314,7 +326,9 @@ class BudiClientHttpTest {
     @Test
     fun `fetchHealth parses canonical health response`() {
         handle(
-            "/health", 200, "application/json",
+            "/health",
+            200,
+            "application/json",
             """{"ok":true,"version":"8.4.2","api_version":1}""".toByteArray(),
         )
         val health = client.fetchHealth(baseUrl)

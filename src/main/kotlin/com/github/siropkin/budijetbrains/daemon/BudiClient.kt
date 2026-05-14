@@ -114,7 +114,11 @@ internal data class StatuslineData(
 )
 
 /** Resolved rolling-cost triple consumed by status-bar / tooltip rendering. */
-internal data class ResolvedCosts(val cost1d: Double, val cost7d: Double, val cost30d: Double)
+internal data class ResolvedCosts(
+    val cost1d: Double,
+    val cost7d: Double,
+    val cost30d: Double,
+)
 
 /**
  * `/health/sources` response shape. The daemon returns the on-disk paths
@@ -158,7 +162,10 @@ internal enum class HealthState { GRAY, FIRST_RUN, RED, YELLOW, GREEN }
  * `resolveCosts` in budi-cursor.
  */
 internal fun resolveCosts(data: StatuslineData): ResolvedCosts {
-    fun pick(primary: Double?, legacy: Double?): Double {
+    fun pick(
+        primary: Double?,
+        legacy: Double?,
+    ): Double {
         if (primary != null && primary.isFinite()) return primary
         if (legacy != null && legacy.isFinite()) return legacy
         return 0.0
@@ -191,13 +198,12 @@ internal fun formatCost(dollars: Double): String {
  * Render the numeric portion of the statusline, byte-for-byte matching
  * the default Claude Code cost line (`$X 1d · $Y 7d · $Z 30d`).
  */
-internal fun formatCostLine(costs: ResolvedCosts): String {
-    return listOf(
+internal fun formatCostLine(costs: ResolvedCosts): String =
+    listOf(
         "${formatCost(costs.cost1d)} 1d",
         "${formatCost(costs.cost7d)} 7d",
         "${formatCost(costs.cost30d)} 30d",
     ).joinToString(" · ")
-}
 
 /**
  * Decide which health state the status bar is in. Mirrors
@@ -221,12 +227,16 @@ internal fun deriveHealthState(
  * Health state drives the copy variants (`budi`, `budi · setup`,
  * `budi · offline`, `budi · $X 1d · …`); no leading glyph.
  */
-internal fun buildStatusText(state: HealthState, statusline: StatuslineData?): String = when (state) {
-    HealthState.FIRST_RUN -> "budi · setup"
-    HealthState.RED -> "budi · offline"
-    HealthState.GRAY -> "budi"
-    HealthState.GREEN, HealthState.YELLOW -> "budi · ${formatCostLine(resolveCosts(statusline ?: StatuslineData()))}"
-}
+internal fun buildStatusText(
+    state: HealthState,
+    statusline: StatuslineData?,
+): String =
+    when (state) {
+        HealthState.FIRST_RUN -> "budi · setup"
+        HealthState.RED -> "budi · offline"
+        HealthState.GRAY -> "budi"
+        HealthState.GREEN, HealthState.YELLOW -> "budi · ${formatCostLine(resolveCosts(statusline ?: StatuslineData()))}"
+    }
 
 /**
  * Build a status-bar tooltip. Mirrors `buildTooltip` in budi-cursor with
@@ -280,19 +290,21 @@ internal fun buildTooltip(
  * through underscore-to-space title-case so deferred providers from
  * siropkin/budi#295 still render readably.
  */
-internal fun formatProviderName(provider: String): String = when (provider) {
-    "cursor" -> "Cursor"
-    "copilot_chat" -> "Copilot Chat"
-    "copilot_cli" -> "Copilot CLI"
-    "claude_code" -> "Claude Code"
-    "codex" -> "Codex"
-    "continue" -> "Continue"
-    "cline" -> "Cline"
-    "roo_code" -> "Roo Code"
-    else -> provider.split('_').joinToString(" ") {
-        if (it.isEmpty()) it else it[0].uppercaseChar() + it.substring(1)
+internal fun formatProviderName(provider: String): String =
+    when (provider) {
+        "cursor" -> "Cursor"
+        "copilot_chat" -> "Copilot Chat"
+        "copilot_cli" -> "Copilot CLI"
+        "claude_code" -> "Claude Code"
+        "codex" -> "Codex"
+        "continue" -> "Continue"
+        "cline" -> "Cline"
+        "roo_code" -> "Roo Code"
+        else ->
+            provider.split('_').joinToString(" ") {
+                if (it.isEmpty()) it else it[0].uppercaseChar() + it.substring(1)
+            }
     }
-}
 
 /**
  * Build the click-through URL for the status-bar item. Mirrors
@@ -300,7 +312,10 @@ internal fun formatProviderName(provider: String): String = when (provider) {
  * the rolling 1d window, open the cloud session list; otherwise open
  * the dashboard root.
  */
-internal fun clickUrl(cloudEndpoint: String, statusline: StatuslineData?): String {
+internal fun clickUrl(
+    cloudEndpoint: String,
+    statusline: StatuslineData?,
+): String {
     val base = cloudEndpoint.trimEnd('/')
     val active = statusline?.activeProvider
     if (statusline != null && active != null && active.isNotEmpty()) {
@@ -322,14 +337,16 @@ internal fun buildStatuslineUrl(
     includeOtherSurfaces: Boolean = false,
 ): String {
     val base = daemonUrl.trimEnd('/')
-    val params = buildList {
-        if (!includeOtherSurfaces) add("surface" to SURFACE_JETBRAINS)
-        if (!projectDir.isNullOrEmpty()) add("project_dir" to projectDir)
-    }
+    val params =
+        buildList {
+            if (!includeOtherSurfaces) add("surface" to SURFACE_JETBRAINS)
+            if (!projectDir.isNullOrEmpty()) add("project_dir" to projectDir)
+        }
     if (params.isEmpty()) return "$base/analytics/statusline"
-    val query = params.joinToString("&") { (k, v) ->
-        "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}"
-    }
+    val query =
+        params.joinToString("&") { (k, v) ->
+            "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}"
+        }
     return "$base/analytics/statusline?$query"
 }
 
@@ -372,7 +389,8 @@ internal fun renderDetectedSourcesHtml(sources: DetectedSources?): String {
 }
 
 private fun escapeForHtml(s: String): String =
-    s.replace("&", "&amp;")
+    s
+        .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
 
@@ -383,7 +401,12 @@ private fun escapeForHtml(s: String): String =
  * (parity with siropkin/budi-cursor#42).
  */
 internal fun isLoopbackDaemonUrl(url: String): Boolean {
-    val parsed = try { URI(url) } catch (_: Exception) { return false }
+    val parsed =
+        try {
+            URI(url)
+        } catch (_: Exception) {
+            return false
+        }
     val scheme = parsed.scheme?.lowercase() ?: return false
     if (scheme != "http" && scheme != "https") return false
     val host = parsed.host?.lowercase() ?: return false
@@ -398,7 +421,12 @@ internal fun isLoopbackDaemonUrl(url: String): Boolean {
  * to a phishing page (parity with siropkin/budi-cursor#43).
  */
 internal fun isAllowedCloudEndpoint(url: String): Boolean {
-    val parsed = try { URI(url) } catch (_: Exception) { return false }
+    val parsed =
+        try {
+            URI(url)
+        } catch (_: Exception) {
+            return false
+        }
     if (parsed.scheme?.lowercase() != "https") return false
     if (!parsed.userInfo.isNullOrEmpty()) return false
     val host = parsed.host?.lowercase() ?: return false
@@ -412,20 +440,20 @@ internal fun isAllowedCloudEndpoint(url: String): Boolean {
  * any failure — callers fold that into the `RED` health state.
  */
 internal class BudiClient(
-    private val httpClient: HttpClient = HttpClient.newBuilder()
-        .connectTimeout(REQUEST_TIMEOUT)
-        .build(),
+    private val httpClient: HttpClient =
+        HttpClient
+            .newBuilder()
+            .connectTimeout(REQUEST_TIMEOUT)
+            .build(),
     private val gson: Gson = Gson(),
 ) {
-    fun fetchHealth(daemonUrl: String): DaemonHealth? =
-        getJson("${daemonUrl.trimEnd('/')}/health", DaemonHealth::class.java)
+    fun fetchHealth(daemonUrl: String): DaemonHealth? = getJson("${daemonUrl.trimEnd('/')}/health", DaemonHealth::class.java)
 
     fun fetchStatusline(
         daemonUrl: String,
         projectDir: String? = null,
         includeOtherSurfaces: Boolean = false,
-    ): StatuslineData? =
-        getJson(buildStatuslineUrl(daemonUrl, projectDir, includeOtherSurfaces), StatuslineData::class.java)
+    ): StatuslineData? = getJson(buildStatuslineUrl(daemonUrl, projectDir, includeOtherSurfaces), StatuslineData::class.java)
 
     /**
      * Fetch the daemon's per-surface source discovery for the settings
@@ -437,30 +465,40 @@ internal class BudiClient(
     fun fetchSources(
         daemonUrl: String,
         includeOtherSurfaces: Boolean = false,
-    ): DetectedSources? =
-        getJson(buildSourcesUrl(daemonUrl, includeOtherSurfaces), DetectedSources::class.java)
+    ): DetectedSources? = getJson(buildSourcesUrl(daemonUrl, includeOtherSurfaces), DetectedSources::class.java)
 
-    private fun <T> getJson(url: String, type: Class<T>): T? {
-        val request = try {
-            HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(REQUEST_TIMEOUT)
-                .header("Accept", "application/json")
-                .GET()
-                .build()
-        } catch (_: IllegalArgumentException) {
-            return null
-        }
-        val response: HttpResponse<ByteArray> = try {
-            httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
-        } catch (_: IOException) {
-            return null
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-            return null
-        }
+    private fun <T> getJson(
+        url: String,
+        type: Class<T>,
+    ): T? {
+        val request =
+            try {
+                HttpRequest
+                    .newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(REQUEST_TIMEOUT)
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build()
+            } catch (_: IllegalArgumentException) {
+                return null
+            }
+        val response: HttpResponse<ByteArray> =
+            try {
+                httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
+            } catch (_: IOException) {
+                return null
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                return null
+            }
         if (response.statusCode() < 200 || response.statusCode() >= 300) return null
-        val contentType = response.headers().firstValue("content-type").orElse("").lowercase()
+        val contentType =
+            response
+                .headers()
+                .firstValue("content-type")
+                .orElse("")
+                .lowercase()
         if (!contentType.contains("application/json")) return null
         val body = response.body() ?: return null
         if (body.size > MAX_RESPONSE_BYTES) return null

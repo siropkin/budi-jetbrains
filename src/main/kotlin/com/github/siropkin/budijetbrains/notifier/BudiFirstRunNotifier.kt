@@ -36,37 +36,50 @@ internal const val BUDI_NOTIFICATION_GROUP = "Budi"
  */
 internal fun showFirstRunNotification(project: Project) {
     val cmd = installCommandForPlatform(currentInstallPlatform())
-    val notification: Notification = NotificationGroupManager.getInstance()
-        .getNotificationGroup(BUDI_NOTIFICATION_GROUP)
-        .createNotification(
-            "budi is not installed on this machine yet",
-            "Click <b>Show install command</b> to see the one-liner you need to run in a terminal.",
-            NotificationType.INFORMATION,
-        )
-
-    notification.addAction(object : NotificationAction("Show install command") {
-        override fun actionPerformed(e: AnActionEvent, n: Notification) {
-            val title = "Install budi for ${cmd.label}"
-            val message = "Run this in your $${cmd.shell} shell:\n\n${cmd.command}"
-            val choice = Messages.showDialog(
-                project,
-                message,
-                title,
-                arrayOf("Copy command", "Close"),
-                0,
-                Messages.getInformationIcon(),
+    val notification: Notification =
+        NotificationGroupManager
+            .getInstance()
+            .getNotificationGroup(BUDI_NOTIFICATION_GROUP)
+            .createNotification(
+                "budi is not installed on this machine yet",
+                "Click <b>Show install command</b> to see the one-liner you need to run in a terminal.",
+                NotificationType.INFORMATION,
             )
-            if (choice == 0) {
-                CopyPasteManager.getInstance().setContents(StringSelection(cmd.command))
-            }
-        }
-    })
 
-    notification.addAction(object : NotificationAction("Dismiss") {
-        override fun actionPerformed(e: AnActionEvent, n: Notification) {
-            n.expire()
-        }
-    })
+    notification.addAction(
+        object : NotificationAction("Show install command") {
+            override fun actionPerformed(
+                e: AnActionEvent,
+                n: Notification,
+            ) {
+                val title = "Install budi for ${cmd.label}"
+                val message = "Run this in your $${cmd.shell} shell:\n\n${cmd.command}"
+                val choice =
+                    Messages.showDialog(
+                        project,
+                        message,
+                        title,
+                        arrayOf("Copy command", "Close"),
+                        0,
+                        Messages.getInformationIcon(),
+                    )
+                if (choice == 0) {
+                    CopyPasteManager.getInstance().setContents(StringSelection(cmd.command))
+                }
+            }
+        },
+    )
+
+    notification.addAction(
+        object : NotificationAction("Dismiss") {
+            override fun actionPerformed(
+                e: AnActionEvent,
+                n: Notification,
+            ) {
+                n.expire()
+            }
+        },
+    )
 
     notification.notify(project)
 }

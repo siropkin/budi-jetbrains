@@ -27,7 +27,6 @@ import kotlinx.coroutines.delay
  *     up immediately.
  */
 class BudiProjectActivity : ProjectActivity {
-
     /**
      * Boot path: start the (idempotent) application-scoped poller, wait
      * one initial tick, then decide whether to surface the welcome
