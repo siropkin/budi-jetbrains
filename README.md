@@ -13,7 +13,7 @@ budi · $1.42 1d · $8.30 7d · $34.21 30d
 
 JetBrains-rooted Copilot Chat usage is tracked under the `jetbrains` surface so the [cloud dashboard](https://app.getbudi.dev) can break costs down by editor host.
 
-> **Status:** v0.1 in development. Listing is published to the [JetBrains Marketplace Beta channel](https://plugins.jetbrains.com/plugin/31662-budi/versions/beta) until daemon-path detection is confirmed on a non-dev machine.
+> **Status:** v0.1 line is live on the JetBrains Marketplace **Stable** channel. Pre-releases continue to ship to the [Beta channel](https://plugins.jetbrains.com/plugin/31662-budi/versions/beta) ahead of each stable promote.
 
 ## What the widget shows
 
@@ -66,7 +66,7 @@ You also need the [budi daemon](https://getbudi.dev) running locally on `127.0.0
 - **Status-bar widget** — `budi · $X 1d · $Y 7d · $Z 30d`. Click opens the [budi cloud dashboard](https://app.getbudi.dev/dashboard).
 - **First-run hand-off** — sticky balloon with the canonical install command when the daemon is missing. Auto-retires on the first daemon reading.
 - **Actionable upgrade prompt** — when the daemon's `api_version` is below this plugin's floor, a balloon offers `budi update` (plus the platform fallback) with a "Don't show again" action that auto-resets when the daemon catches up.
-- **Settings panel** — <kbd>Settings/Preferences</kbd> → <kbd>Tools</kbd> → <kbd>budi</kbd> exposes daemon URL, cloud endpoint, polling interval, and the `includeOtherSurfaces` opt-out.
+- **Settings panel** — <kbd>Settings/Preferences</kbd> → <kbd>Tools</kbd> → <kbd>budi</kbd> exposes daemon URL, cloud endpoint, polling interval, the `includeOtherSurfaces` opt-out, and a read-only **Detected sources** row showing the filesystem paths the daemon is tailing for `surface=jetbrains`.
 
 That's it. Per [SOUL.md](./SOUL.md), the plugin is intentionally statusline-only — no tool window, no session list, no vitals grid.
 
