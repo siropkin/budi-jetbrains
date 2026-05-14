@@ -18,15 +18,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 class BudiAppState {
 
     @Volatile
-    var lastHealth: DaemonHealth? = null
+    internal var lastHealth: DaemonHealth? = null
         private set
 
     @Volatile
-    var lastStatusline: StatuslineData? = null
+    internal var lastStatusline: StatuslineData? = null
         private set
 
     @Volatile
-    var lastState: HealthState = HealthState.GRAY
+    internal var lastState: HealthState = HealthState.GRAY
         private set
 
     private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -36,7 +36,7 @@ class BudiAppState {
      * `everSawDaemon` is threaded through from the persistent settings
      * so the FIRST_RUN → RED transition mirrors budi-cursor.
      */
-    fun update(health: DaemonHealth?, statusline: StatuslineData?, everSawDaemon: Boolean) {
+    internal fun update(health: DaemonHealth?, statusline: StatuslineData?, everSawDaemon: Boolean) {
         lastHealth = health
         lastStatusline = statusline
         lastState = deriveHealthState(health, statusline, everSawDaemon)

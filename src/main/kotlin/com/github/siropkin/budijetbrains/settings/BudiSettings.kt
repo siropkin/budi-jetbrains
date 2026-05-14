@@ -16,10 +16,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  * `package.json` default). 15 s balances "feels live" against daemon
  * load — analytics is a slow-moving signal.
  */
-const val DEFAULT_POLLING_INTERVAL_MS = 15_000
+internal const val DEFAULT_POLLING_INTERVAL_MS = 15_000
 
 /** Lower bound enforced by the Configurable UI to avoid hammering the daemon. */
-const val MIN_POLLING_INTERVAL_MS = 3_000
+internal const val MIN_POLLING_INTERVAL_MS = 3_000
 
 /**
  * Persistent settings for the budi plugin. Application-scoped because

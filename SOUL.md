@@ -70,7 +70,7 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 - `src/main/kotlin/.../settings/BudiSettings.kt` — `PersistentStateComponent` for daemon URL, cloud endpoint, polling interval, `includeOtherSurfaces`, suppress flags, and the `everSawDaemon` first-run latch.
 - `src/main/kotlin/.../settings/BudiConfigurable.kt` — `Settings → Tools → budi` page; allowlists enforced in `apply()` so off-policy values surface as a `ConfigurationException`.
 - `src/main/kotlin/.../statusbar/BudiStatusBarWidgetFactory.kt` — `StatusBarWidgetFactory` + `StatusBarWidget.TextPresentation`. One widget per open project, all reading from the application-scoped state.
-- `src/main/kotlin/.../notifier/BudiNotifier.kt` — first-run welcome balloon. "Show install command" opens a dialog with the platform-specific install one-liner.
+- `src/main/kotlin/.../notifier/BudiFirstRunNotifier.kt` — first-run welcome balloon. "Show install command" opens a dialog with the platform-specific install one-liner.
 - `src/main/kotlin/.../notifier/BudiUpgradeNotifier.kt` — actionable upgrade prompt (`MIN_API_VERSION` gate). `evaluateUpgradePrompt` is a pure decision function, separately unit-testable.
 - `src/main/kotlin/.../install/BudiInstallCommands.kt` — canonical platform-specific install + upgrade commands (kept in lockstep with the install one-liners documented in `siropkin/budi/README.md`).
 - `src/main/kotlin/.../startup/BudiProjectActivity.kt` — `ProjectActivity` that boots the poller on first project open and surfaces the welcome balloon when the daemon is missing.

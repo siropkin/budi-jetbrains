@@ -23,26 +23,26 @@ import java.time.Duration
  * Bump only when budi-core actually bumps `API_VERSION` for a breaking
  * wire change, and update both sides in the same release.
  */
-const val MIN_API_VERSION = 1
+internal const val MIN_API_VERSION = 1
 
 /**
  * Surface name this plugin sends as `?surface=<name>` on every request.
  * Hardcoded — JetBrains plugins know they are JetBrains, no host enum
  * (siropkin/budi#702 + budi-jetbrains#6).
  */
-const val SURFACE_JETBRAINS = "jetbrains"
+internal const val SURFACE_JETBRAINS = "jetbrains"
 
 /**
  * Default daemon URL — must stay in sync with the Configurable's default
  * and with budi's SOUL.md "loopback only" pin.
  */
-const val DEFAULT_DAEMON_URL = "http://127.0.0.1:7878"
+internal const val DEFAULT_DAEMON_URL = "http://127.0.0.1:7878"
 
 /**
  * Default cloud endpoint — must stay in sync with the Configurable's
  * default and with budi's SOUL.md "cloud lives at app.getbudi.dev" pin.
  */
-const val DEFAULT_CLOUD_ENDPOINT = "https://app.getbudi.dev"
+internal const val DEFAULT_CLOUD_ENDPOINT = "https://app.getbudi.dev"
 
 /** Loopback hosts the daemon is allowed to bind on (mirrors budi-cursor#42). */
 private val LOOPBACK_HOSTS = setOf("127.0.0.1", "localhost", "[::1]")
@@ -63,7 +63,7 @@ private const val MAX_RESPONSE_BYTES = 64L * 1024L
 private val REQUEST_TIMEOUT: Duration = Duration.ofSeconds(3)
 
 /** `/health` response shape. */
-data class DaemonHealth(
+internal data class DaemonHealth(
     val ok: Boolean = false,
     val version: String = "",
     @SerializedName("api_version") val apiVersion: Int = 0,
@@ -74,7 +74,7 @@ data class DaemonHealth(
  * `StatuslineData` 1:1 — including the deprecated 8.0 aliases so this
  * plugin still renders something useful against a pre-#224 daemon.
  */
-data class StatuslineData(
+internal data class StatuslineData(
     @SerializedName("cost_1d") val cost1d: Double? = null,
     @SerializedName("cost_7d") val cost7d: Double? = null,
     @SerializedName("cost_30d") val cost30d: Double? = null,
@@ -87,7 +87,7 @@ data class StatuslineData(
 )
 
 /** Resolved rolling-cost triple consumed by status-bar / tooltip rendering. */
-data class ResolvedCosts(val cost1d: Double, val cost7d: Double, val cost30d: Double)
+internal data class ResolvedCosts(val cost1d: Double, val cost7d: Double, val cost30d: Double)
 
 /**
  * `/health/sources` response shape. The daemon returns the on-disk paths
@@ -101,7 +101,7 @@ data class ResolvedCosts(val cost1d: Double, val cost7d: Double, val cost30d: Do
  * and the settings panel renders a quiet "no sources detected" empty
  * state (see budi-jetbrains#33).
  */
-data class DetectedSources(
+internal data class DetectedSources(
     val surface: String? = null,
     val paths: List<String> = emptyList(),
 )
@@ -122,7 +122,7 @@ data class DetectedSources(
  *               rolling window.
  * - GREEN     — daemon healthy and traffic recorded.
  */
-enum class HealthState { GRAY, FIRST_RUN, RED, YELLOW, GREEN }
+internal enum class HealthState { GRAY, FIRST_RUN, RED, YELLOW, GREEN }
 
 /**
  * Resolve the rolling cost fields, preferring the canonical
@@ -130,7 +130,7 @@ enum class HealthState { GRAY, FIRST_RUN, RED, YELLOW, GREEN }
  * deprecated 8.0 aliases when talking to an older daemon. Mirrors
  * `resolveCosts` in budi-cursor.
  */
-fun resolveCosts(data: StatuslineData): ResolvedCosts {
+internal fun resolveCosts(data: StatuslineData): ResolvedCosts {
     fun pick(primary: Double?, legacy: Double?): Double {
         if (primary != null && primary.isFinite()) return primary
         if (legacy != null && legacy.isFinite()) return legacy
@@ -152,7 +152,7 @@ fun resolveCosts(data: StatuslineData): ResolvedCosts {
  *   > 0                  → "$1.23"
  *   = 0                  → "$0.00"
  */
-fun formatCost(dollars: Double): String {
+internal fun formatCost(dollars: Double): String {
     if (!dollars.isFinite() || dollars < 0.0) return "$0.00"
     if (dollars >= 1000.0) return "$%.1fK".format(dollars / 1000.0)
     if (dollars >= 100.0) return "$%d".format(Math.round(dollars))
@@ -164,7 +164,7 @@ fun formatCost(dollars: Double): String {
  * Render the numeric portion of the statusline, byte-for-byte matching
  * the default Claude Code cost line (`$X 1d · $Y 7d · $Z 30d`).
  */
-fun formatCostLine(costs: ResolvedCosts): String {
+internal fun formatCostLine(costs: ResolvedCosts): String {
     return listOf(
         "${formatCost(costs.cost1d)} 1d",
         "${formatCost(costs.cost7d)} 7d",
@@ -176,7 +176,7 @@ fun formatCostLine(costs: ResolvedCosts): String {
  * Decide which health state the status bar is in. Mirrors
  * `deriveHealthState` in budi-cursor 1:1.
  */
-fun deriveHealthState(
+internal fun deriveHealthState(
     health: DaemonHealth?,
     statusline: StatuslineData?,
     everSawDaemon: Boolean = true,
@@ -194,7 +194,7 @@ fun deriveHealthState(
  * Health state drives the copy variants (`budi`, `budi · setup`,
  * `budi · offline`, `budi · $X 1d · …`); no leading glyph.
  */
-fun buildStatusText(state: HealthState, statusline: StatuslineData?): String = when (state) {
+internal fun buildStatusText(state: HealthState, statusline: StatuslineData?): String = when (state) {
     HealthState.FIRST_RUN -> "budi · setup"
     HealthState.RED -> "budi · offline"
     HealthState.GRAY -> "budi"
@@ -205,7 +205,7 @@ fun buildStatusText(state: HealthState, statusline: StatuslineData?): String = w
  * Build a status-bar tooltip. Mirrors `buildTooltip` in budi-cursor with
  * the host-dependent branches collapsed to the JetBrains-only path.
  */
-fun buildTooltip(
+internal fun buildTooltip(
     state: HealthState,
     statusline: StatuslineData?,
     cloudEndpoint: String,
@@ -253,7 +253,7 @@ fun buildTooltip(
  * through underscore-to-space title-case so deferred providers from
  * siropkin/budi#295 still render readably.
  */
-fun formatProviderName(provider: String): String = when (provider) {
+internal fun formatProviderName(provider: String): String = when (provider) {
     "cursor" -> "Cursor"
     "copilot_chat" -> "Copilot Chat"
     "copilot_cli" -> "Copilot CLI"
@@ -273,7 +273,7 @@ fun formatProviderName(provider: String): String = when (provider) {
  * the rolling 1d window, open the cloud session list; otherwise open
  * the dashboard root.
  */
-fun clickUrl(cloudEndpoint: String, statusline: StatuslineData?): String {
+internal fun clickUrl(cloudEndpoint: String, statusline: StatuslineData?): String {
     val base = cloudEndpoint.trimEnd('/')
     val active = statusline?.activeProvider
     if (statusline != null && active != null && active.isNotEmpty()) {
@@ -289,7 +289,7 @@ fun clickUrl(cloudEndpoint: String, statusline: StatuslineData?): String {
  * `buildStatuslineUrl` in budi-cursor with the JetBrains surface
  * hardcoded.
  */
-fun buildStatuslineUrl(
+internal fun buildStatuslineUrl(
     daemonUrl: String,
     projectDir: String? = null,
     includeOtherSurfaces: Boolean = false,
@@ -312,7 +312,7 @@ fun buildStatuslineUrl(
  * surface the daemon has discovered. Mirrors `buildStatuslineUrl` so the
  * two endpoints stay shape-consistent.
  */
-fun buildSourcesUrl(
+internal fun buildSourcesUrl(
     daemonUrl: String,
     includeOtherSurfaces: Boolean = false,
 ): String {
@@ -331,7 +331,7 @@ fun buildSourcesUrl(
  * input → an unordered list of paths, HTML-escaped so a path containing
  * `<` or `&` does not break the label rendering.
  */
-fun renderDetectedSourcesHtml(sources: DetectedSources?): String {
+internal fun renderDetectedSourcesHtml(sources: DetectedSources?): String {
     val paths = sources?.paths.orEmpty().filter { it.isNotBlank() }
     if (paths.isEmpty()) {
         return "<html><i>No sources detected.</i></html>"
@@ -355,7 +355,7 @@ private fun escapeForHtml(s: String): String =
  * malicious project-scoped override cannot redirect the polling traffic
  * (parity with siropkin/budi-cursor#42).
  */
-fun isLoopbackDaemonUrl(url: String): Boolean {
+internal fun isLoopbackDaemonUrl(url: String): Boolean {
     val parsed = try { URI(url) } catch (_: Exception) { return false }
     val scheme = parsed.scheme?.lowercase() ?: return false
     if (scheme != "http" && scheme != "https") return false
@@ -370,7 +370,7 @@ fun isLoopbackDaemonUrl(url: String): Boolean {
  * malicious project-scoped override cannot redirect the click-through
  * to a phishing page (parity with siropkin/budi-cursor#43).
  */
-fun isAllowedCloudEndpoint(url: String): Boolean {
+internal fun isAllowedCloudEndpoint(url: String): Boolean {
     val parsed = try { URI(url) } catch (_: Exception) { return false }
     if (parsed.scheme?.lowercase() != "https") return false
     if (!parsed.userInfo.isNullOrEmpty()) return false
@@ -384,7 +384,7 @@ fun isAllowedCloudEndpoint(url: String): Boolean {
  * 64 KB body cap, 2xx-only, JSON content-type only. Returns `null` on
  * any failure — callers fold that into the `RED` health state.
  */
-class BudiClient(
+internal class BudiClient(
     private val httpClient: HttpClient = HttpClient.newBuilder()
         .connectTimeout(REQUEST_TIMEOUT)
         .build(),

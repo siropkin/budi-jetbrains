@@ -19,9 +19,9 @@ import com.intellij.openapi.util.SystemInfo
  * not drift.
  */
 
-enum class InstallPlatform { MACOS, LINUX, WINDOWS }
+internal enum class InstallPlatform { MACOS, LINUX, WINDOWS }
 
-data class InstallCommand(
+internal data class InstallCommand(
     val platform: InstallPlatform,
     /** Short display label. */
     val label: String,
@@ -31,28 +31,28 @@ data class InstallCommand(
     val command: String,
 )
 
-val MACOS_COMMAND = InstallCommand(
+internal val MACOS_COMMAND = InstallCommand(
     platform = InstallPlatform.MACOS,
     label = "macOS",
     shell = "bash",
     command = "brew install siropkin/budi/budi",
 )
 
-val LINUX_COMMAND = InstallCommand(
+internal val LINUX_COMMAND = InstallCommand(
     platform = InstallPlatform.LINUX,
     label = "Linux",
     shell = "bash",
     command = "curl -fsSL https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.sh | bash",
 )
 
-val WINDOWS_COMMAND = InstallCommand(
+internal val WINDOWS_COMMAND = InstallCommand(
     platform = InstallPlatform.WINDOWS,
     label = "Windows (PowerShell)",
     shell = "powershell",
     command = "irm https://raw.githubusercontent.com/siropkin/budi/main/scripts/install-standalone.ps1 | iex",
 )
 
-fun installCommandForPlatform(platform: InstallPlatform): InstallCommand = when (platform) {
+internal fun installCommandForPlatform(platform: InstallPlatform): InstallCommand = when (platform) {
     InstallPlatform.MACOS -> MACOS_COMMAND
     InstallPlatform.LINUX -> LINUX_COMMAND
     InstallPlatform.WINDOWS -> WINDOWS_COMMAND
@@ -68,13 +68,13 @@ fun installCommandForPlatform(platform: InstallPlatform): InstallCommand = when 
  * preferred when the daemon is reachable, this one is the platform
  * fallback for the broken-daemon case.
  */
-fun upgradeCommandForPlatform(platform: InstallPlatform): String = when (platform) {
+internal fun upgradeCommandForPlatform(platform: InstallPlatform): String = when (platform) {
     InstallPlatform.MACOS -> "brew upgrade siropkin/budi/budi"
     InstallPlatform.LINUX, InstallPlatform.WINDOWS -> installCommandForPlatform(platform).command
 }
 
 /** Detect the current host OS via IntelliJ's `SystemInfo`. */
-fun currentInstallPlatform(): InstallPlatform = when {
+internal fun currentInstallPlatform(): InstallPlatform = when {
     SystemInfo.isWindows -> InstallPlatform.WINDOWS
     SystemInfo.isMac -> InstallPlatform.MACOS
     else -> InstallPlatform.LINUX
