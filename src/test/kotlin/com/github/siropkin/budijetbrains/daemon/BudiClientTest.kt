@@ -152,12 +152,95 @@ class BudiClientPureLogicTest {
     }
 
     @Test
+    fun `buildTooltip yellow narrows scope to single contributing provider`() {
+        // When the surface rollup names a single contributor, the "No
+        // recent X traffic" copy must use that contributor's pretty name
+        // rather than the generic "JetBrains AI" fallback.
+        val data = StatuslineData(contributingProviders = listOf("copilot_chat"))
+        val tip = buildTooltip(HealthState.YELLOW, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("No recent Copilot Chat traffic in the last 24h."))
+        // Single contributor → render as Provider line, not Tracking line.
+        assertTrue(tip.contains("Provider: Copilot Chat"))
+        assertFalse(tip.contains("Tracking:"))
+    }
+
+    @Test
+    fun `buildTooltip green renders Tracking line for multi-provider contributors`() {
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                contributingProviders = listOf("copilot_chat", "claude_code"),
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Tracking: Copilot Chat, Claude Code"))
+        // Multi-provider rollup must not also render a single-Provider line.
+        assertFalse(tip.contains("Provider: Copilot Chat\n"))
+    }
+
+    @Test
+    fun `buildTooltip green falls back to copilot_chat when no provider hints`() {
+        // When the daemon doesn't name a provider at all, the tooltip
+        // labels the row "Copilot Chat" — the v0.1 default for the
+        // JetBrains surface.
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Provider: Copilot Chat"))
+    }
+
+    @Test
+    fun `buildTooltip prefers provider_scope over active_provider for the single-row label`() {
+        // When both hints are present, provider_scope (the rollup scope)
+        // wins — active_provider is the most-recent-session hint, not
+        // the rollup label.
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                activeProvider = "claude_code",
+                providerScope = "copilot_chat",
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Provider: Copilot Chat"))
+    }
+
+    @Test
+    fun `buildTooltip strips a trailing slash on the cloud endpoint click line`() {
+        val tip = buildTooltip(HealthState.GREEN, StatuslineData(cost1d = 1.0), "https://app.getbudi.dev/")
+        assertTrue(tip.contains("Click to open https://app.getbudi.dev"))
+        assertFalse(tip.contains("Click to open https://app.getbudi.dev/\n"))
+    }
+
+    @Test
     fun `formatProviderName covers canonical wire names`() {
         assertEquals("Copilot Chat", formatProviderName("copilot_chat"))
         assertEquals("Claude Code", formatProviderName("claude_code"))
         assertEquals("Codex", formatProviderName("codex"))
         // Unknown wire names round-trip via underscore-to-space title-case.
         assertEquals("Junie Chat", formatProviderName("junie_chat"))
+    }
+
+    @Test
+    fun `formatProviderName handles empty segments without crashing`() {
+        // Defensive: a trailing underscore would leave an empty segment.
+        // The title-case mapper must not index into an empty string.
+        assertEquals("", formatProviderName(""))
+        assertEquals("Foo ", formatProviderName("foo_"))
+        assertEquals(" Bar", formatProviderName("_bar"))
+    }
+
+    @Test
+    fun `buildStatuslineUrl treats empty projectDir as omitted`() {
+        val url = buildStatuslineUrl("http://127.0.0.1:7878", projectDir = "")
+        assertEquals("http://127.0.0.1:7878/analytics/statusline?surface=jetbrains", url)
+    }
+
+    @Test
+    fun `buildStatuslineUrl trims a trailing slash on the daemon URL`() {
+        val url = buildStatuslineUrl("http://127.0.0.1:7878/")
+        assertEquals("http://127.0.0.1:7878/analytics/statusline?surface=jetbrains", url)
     }
 
     @Test
@@ -173,6 +256,24 @@ class BudiClientPureLogicTest {
         assertEquals(
             "https://app.getbudi.dev/dashboard/sessions",
             clickUrl(DEFAULT_CLOUD_ENDPOINT, StatuslineData(activeProvider = "copilot_chat")),
+        )
+    }
+
+    @Test
+    fun `clickUrl treats an empty active_provider string as no provider`() {
+        // budi-cursor parity: `null` and `""` both route to /dashboard,
+        // only a non-empty value flips to /dashboard/sessions.
+        assertEquals(
+            "https://app.getbudi.dev/dashboard",
+            clickUrl(DEFAULT_CLOUD_ENDPOINT, StatuslineData(activeProvider = "")),
+        )
+    }
+
+    @Test
+    fun `clickUrl trims a trailing slash on the cloud endpoint`() {
+        assertEquals(
+            "https://app.getbudi.dev/dashboard",
+            clickUrl("https://app.getbudi.dev/", null),
         )
     }
 
@@ -213,6 +314,15 @@ class BudiClientPureLogicTest {
         assertFalse(isLoopbackDaemonUrl("file:///etc/passwd"))
         assertFalse(isLoopbackDaemonUrl("http://127.0.0.1.attacker.example"))
         assertFalse(isLoopbackDaemonUrl("not a url"))
+    }
+
+    @Test
+    fun `isLoopbackDaemonUrl rejects empty and host-less inputs`() {
+        assertFalse(isLoopbackDaemonUrl(""))
+        // Scheme-only URI has a null host.
+        assertFalse(isLoopbackDaemonUrl("http://"))
+        // Non-http(s) schemes are rejected even if host is loopback.
+        assertFalse(isLoopbackDaemonUrl("ws://127.0.0.1:7878"))
     }
 
     @Test
