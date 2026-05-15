@@ -15,12 +15,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  * than once per project.
  *
  * Thread contract:
- *  - The cached `lastHealth` / `lastStatusline` / `lastState` fields are
- *    `@Volatile`; readers from any thread see the most recently written
- *    triple as a single consistent snapshot (the three writes in
- *    [update] are atomic-enough for the widget — torn reads would at
- *    worst paint one stale frame, which the next tick immediately
- *    corrects).
+ *  - The cached `lastStatusline` / `lastState` fields are `@Volatile`;
+ *    readers from any thread see the most recently written pair as a
+ *    single consistent snapshot (the two writes in [update] are
+ *    atomic-enough for the widget — torn reads would at worst paint
+ *    one stale frame, which the next tick immediately corrects).
  *  - Listeners are invoked **synchronously on the caller's thread**.
  *    Today the only caller is [com.github.siropkin.budijetbrains.poller.BudiPoller]
  *    on its pooled-thread alarm, so subscribers run on a background
@@ -30,10 +29,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 @Service(Service.Level.APP)
 class BudiAppState {
-    @Volatile
-    internal var lastHealth: DaemonHealth? = null
-        private set
-
     @Volatile
     internal var lastStatusline: StatuslineData? = null
         private set
@@ -54,7 +49,6 @@ class BudiAppState {
         statusline: StatuslineData?,
         everSawDaemon: Boolean,
     ) {
-        lastHealth = health
         lastStatusline = statusline
         lastState = deriveHealthState(health, statusline, everSawDaemon)
         listeners.forEach { it.invoke() }
