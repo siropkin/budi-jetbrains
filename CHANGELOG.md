@@ -4,6 +4,36 @@
 
 ## [Unreleased]
 
+## [0.1.3]
+
+Code quality & hygiene milestone — no user-visible behavior changes. Closes the [`v0.1.3 — Code quality & hygiene`](https://github.com/siropkin/budi-jetbrains/milestone/2) milestone.
+
+### Changed
+
+- Wire `ktlint` + `detekt` into `./gradlew check` so style and smell findings gate CI. Pre-existing detekt findings are pinned in `config/detekt/detekt-baseline.xml` — track that file toward zero rather than letting it grow. (#49, #55)
+- KDoc pass on the public surface and load-bearing internals (`BudiClient`, statusline helpers, settings, poller, widget). (#50, #53)
+- Tighten internal visibility and rename the first-run notifier file to match its class. (#44, #52)
+- Drop the legacy `today_cost` / `week_cost` / `month_cost` statusline aliases — the daemon's canonical `1d` / `7d` / `30d` keys are the only ones the plugin now reads. (#47, #60)
+
+### Removed
+
+- Dead-code & unused-symbol sweep across production Kotlin sources. (#48, #56)
+
+### Fixed
+
+- Skip the welcome balloon when the project is disposed mid-wait, fixing a startup-race NPE seen in plugin verifier runs. (#51)
+
+### Tests
+
+- Raise the coverage floor for `BudiAppState` and `buildTooltip` routing. (#46, #59)
+
+### Build
+
+- Bump `org.jlleitschuh.gradle.ktlint` from 12.1.2 to 14.2.0. (#58)
+- Bump `io.gitlab.arturbosch.detekt` from 1.23.7 to 1.23.8. (#57)
+- Bump Gradle wrapper from 9.5.0 to 9.5.1. (#42)
+- Bump `nick-fields/retry` from 3 to 4. (#41)
+
 ## [0.1.2]
 
 ### Changed
@@ -46,7 +76,8 @@
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
 
-[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...HEAD
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...HEAD
+[0.1.3]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/siropkin/budi-jetbrains/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/siropkin/budi-jetbrains/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/siropkin/budi-jetbrains/compare/0.1.0-beta.1...0.1.0
