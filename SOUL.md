@@ -62,7 +62,7 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 - HTTP: `GET http://127.0.0.1:7878/analytics/statusline?surface=jetbrains` (plus `project_dir` when a project is open) and `GET /health`. The plugin never sends a `?provider=` filter — surface-based scoping (siropkin/budi#702) is the daemon's job, and the wire response is rendered as-is.
 - The response shape is the shared provider-scoped status contract pinned in [`docs/statusline-contract.md`](https://github.com/siropkin/budi/blob/main/docs/statusline-contract.md) in the main repo. The contract evolves in `siropkin/budi` first, then here — never the other way.
 - On startup and every poll, read `/health` and verify `api_version`. If the daemon is older than this plugin's `MIN_API_VERSION`, show the actionable upgrade balloon and keep polling. Do not crash.
-- Legacy aliases (`today_cost` / `week_cost` / `month_cost`) are still read as a fallback when the canonical `cost_1d` / `cost_7d` / `cost_30d` fields are missing. Drop the fallback the release after the main repo drops the aliases.
+- Only the canonical `cost_1d` / `cost_7d` / `cost_30d` rolling-window cost fields are read. The deprecated 8.0 aliases (`today_cost` / `week_cost` / `month_cost`) have been dropped — pre-8.1 daemons that emit only the aliases fall below `MIN_API_VERSION` and are routed to the upgrade balloon instead of silently rendering `$0`.
 - Defense-in-depth on every request: 3 s timeout, 64 KB body cap, 2xx-only, `application/json` content-type only. Loopback-only daemon URL; off-loopback values fall back to `127.0.0.1:7878`. Cloud endpoint allowlisted to `getbudi.dev` (and subdomains) so an unsanitized override cannot redirect the click-through to a phishing host.
 
 ## Key files
