@@ -42,15 +42,17 @@ import java.time.Duration
 /**
  * The minimum daemon `/health.api_version` this plugin requires.
  *
- * Pinned at `1` to match the same wire shape budi-cursor v1.4 ships with
- * (see siropkin/budi-cursor#40 for the why — every released daemon today
- * still reports `api_version: 1` even after the host-scoped #650/#702
- * landings, so anything higher gates out 100% of users).
+ * Pinned at `2` since this release dropped the legacy 8.0 cost-field
+ * aliases — pre-8.1 daemons that emitted only the aliases would silently
+ * render `$0` without an upgrade prompt. 8.4.2 is the first daemon to
+ * bump `api_version` to 2 (see siropkin/budi#692), so the floor doubles
+ * as the upgrade-prompt gate for anyone still on a daemon old enough to
+ * lack the canonical `cost_1d` / `cost_7d` / `cost_30d` fields.
  *
  * Bump only when budi-core actually bumps `API_VERSION` for a breaking
  * wire change, and update both sides in the same release.
  */
-internal const val MIN_API_VERSION = 1
+internal const val MIN_API_VERSION = 2
 
 /**
  * Surface name this plugin sends as `?surface=<name>` on every request.
@@ -98,8 +100,7 @@ internal data class DaemonHealth(
 
 /**
  * `/analytics/statusline` response shape. Mirrors budi-cursor's
- * `StatuslineData` 1:1 — including the deprecated 8.0 aliases so this
- * plugin still renders something useful against a pre-#224 daemon.
+ * `StatuslineData` 1:1.
  */
 internal data class StatuslineData(
     @SerializedName("cost_1d") val cost1d: Double? = null,
@@ -108,9 +109,6 @@ internal data class StatuslineData(
     @SerializedName("active_provider") val activeProvider: String? = null,
     @SerializedName("provider_scope") val providerScope: String? = null,
     @SerializedName("contributing_providers") val contributingProviders: List<String>? = null,
-    @SerializedName("today_cost") val todayCost: Double? = null,
-    @SerializedName("week_cost") val weekCost: Double? = null,
-    @SerializedName("month_cost") val monthCost: Double? = null,
 )
 
 /** Resolved rolling-cost triple consumed by status-bar / tooltip rendering. */
@@ -156,24 +154,16 @@ internal data class DetectedSources(
 internal enum class HealthState { GRAY, FIRST_RUN, RED, YELLOW, GREEN }
 
 /**
- * Resolve the rolling cost fields, preferring the canonical
- * `cost_1d` / `cost_7d` / `cost_30d` shape and falling back to the
- * deprecated 8.0 aliases when talking to an older daemon. Mirrors
- * `resolveCosts` in budi-cursor.
+ * Resolve the rolling cost fields from the canonical
+ * `cost_1d` / `cost_7d` / `cost_30d` shape, defaulting missing or
+ * non-finite values to `0.0`. Mirrors `resolveCosts` in budi-cursor.
  */
 internal fun resolveCosts(data: StatuslineData): ResolvedCosts {
-    fun pick(
-        primary: Double?,
-        legacy: Double?,
-    ): Double {
-        if (primary != null && primary.isFinite()) return primary
-        if (legacy != null && legacy.isFinite()) return legacy
-        return 0.0
-    }
+    fun pick(value: Double?): Double = if (value != null && value.isFinite()) value else 0.0
     return ResolvedCosts(
-        cost1d = pick(data.cost1d, data.todayCost),
-        cost7d = pick(data.cost7d, data.weekCost),
-        cost30d = pick(data.cost30d, data.monthCost),
+        cost1d = pick(data.cost1d),
+        cost7d = pick(data.cost7d),
+        cost30d = pick(data.cost30d),
     )
 }
 

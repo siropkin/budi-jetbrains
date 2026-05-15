@@ -14,15 +14,12 @@ import kotlin.test.assertTrue
 
 class BudiClientPureLogicTest {
     @Test
-    fun `resolveCosts prefers canonical fields over 8_0 aliases`() {
+    fun `resolveCosts reads canonical rolling-window fields`() {
         val data =
             StatuslineData(
                 cost1d = 1.23,
                 cost7d = 4.56,
                 cost30d = 7.89,
-                todayCost = 99.0,
-                weekCost = 99.0,
-                monthCost = 99.0,
             )
         val resolved = resolveCosts(data)
         assertEquals(1.23, resolved.cost1d, 1e-9)
@@ -31,20 +28,23 @@ class BudiClientPureLogicTest {
     }
 
     @Test
-    fun `resolveCosts falls back to legacy aliases when canonical absent`() {
-        val data = StatuslineData(todayCost = 2.0, weekCost = 10.0, monthCost = 40.0)
-        val resolved = resolveCosts(data)
-        assertEquals(2.0, resolved.cost1d, 1e-9)
-        assertEquals(10.0, resolved.cost7d, 1e-9)
-        assertEquals(40.0, resolved.cost30d, 1e-9)
-    }
+    fun `resolveCosts defaults missing or non-finite values to zero`() {
+        val empty = resolveCosts(StatuslineData())
+        assertEquals(0.0, empty.cost1d, 1e-9)
+        assertEquals(0.0, empty.cost7d, 1e-9)
+        assertEquals(0.0, empty.cost30d, 1e-9)
 
-    @Test
-    fun `resolveCosts defaults missing to zero`() {
-        val r = resolveCosts(StatuslineData())
-        assertEquals(0.0, r.cost1d, 1e-9)
-        assertEquals(0.0, r.cost7d, 1e-9)
-        assertEquals(0.0, r.cost30d, 1e-9)
+        val nonFinite =
+            resolveCosts(
+                StatuslineData(
+                    cost1d = Double.NaN,
+                    cost7d = Double.POSITIVE_INFINITY,
+                    cost30d = Double.NEGATIVE_INFINITY,
+                ),
+            )
+        assertEquals(0.0, nonFinite.cost1d, 1e-9)
+        assertEquals(0.0, nonFinite.cost7d, 1e-9)
+        assertEquals(0.0, nonFinite.cost30d, 1e-9)
     }
 
     @Test
