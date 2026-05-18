@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-18
+
+Updated plugin.xml description to sync with Cursor marketplace listing.
+
 ## [0.1.3]
 
 Code quality & hygiene milestone — no user-visible behavior changes. Closes the [`v0.1.3 — Code quality & hygiene`](https://github.com/siropkin/budi-jetbrains/milestone/2) milestone.
@@ -76,7 +80,8 @@ Code quality & hygiene milestone — no user-visible behavior changes. Closes th
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
 
-[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...HEAD
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.4...HEAD
+[0.1.4]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...0.1.4
 [0.1.3]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/siropkin/budi-jetbrains/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/siropkin/budi-jetbrains/compare/0.1.0...0.1.1
