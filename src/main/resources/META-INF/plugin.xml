@@ -5,57 +5,32 @@
     <vendor email="ivan@siropkin.dev" url="https://getbudi.dev">siropkin</vendor>
 
     <description><![CDATA[
-        <p><b>budi</b> is a quiet status-bar widget for JetBrains IDEs that shows your AI coding spend over the last <b>1 day / 7 days / 30 days</b>, scoped to the IDE host you're working in. One line, one click — no tool window, no popup, no nag.</p>
+        <p>See what your AI coding costs at a glance. <b>budi</b> sits in your status bar and shows rolling spend for the last <b>1 day / 7 days / 30 days</b>, scoped to your JetBrains IDE. No extra panels, no popups — just three numbers in the corner.</p>
 
-        <p><code>budi · $1.42 1d · $8.30 7d · $34.21 30d</code></p>
+        <p><code>budi · $2.34 1d · $12.50 7d · $48.10 30d</code></p>
 
-        <h3>Widget states</h3>
         <table>
-            <tr>
-                <th>State</th>
-                <th>Status bar</th>
-                <th>Meaning</th>
-            </tr>
-            <tr>
-                <td>Healthy</td>
-                <td><code>budi · $X 1d · $Y 7d · $Z 30d</code></td>
-                <td>Daemon reachable, traffic in rolling window</td>
-            </tr>
-            <tr>
-                <td>Idle</td>
-                <td><code>budi · $0.00 1d · $0.00 7d · $0.00 30d</code></td>
-                <td>Daemon reachable, no traffic (not an error)</td>
-            </tr>
-            <tr>
-                <td>Offline</td>
-                <td><code>budi · offline</code></td>
-                <td>Daemon unreachable or api_version too old</td>
-            </tr>
-            <tr>
-                <td>Loading</td>
-                <td><code>budi</code></td>
-                <td>Plugin starting, first reading not fetched yet</td>
-            </tr>
-            <tr>
-                <td>Setup</td>
-                <td><code>budi · setup</code></td>
-                <td>First run, daemon not installed. Balloon offers the install command</td>
-            </tr>
+            <tr><th>State</th><th>Status bar</th><th>What it means</th></tr>
+            <tr><td>healthy</td><td><code>budi · $X 1d · $Y 7d · $Z 30d</code></td><td>Daemon running, spend recorded in the rolling window.</td></tr>
+            <tr><td>idle</td><td><code>budi · $0.00 1d · $0.00 7d · $0.00 30d</code></td><td>Daemon running, no spend yet (not an error).</td></tr>
+            <tr><td>offline</td><td><code>budi · offline</code></td><td>Daemon not reachable. Run <code>budi doctor</code> to diagnose.</td></tr>
+            <tr><td>loading</td><td><code>budi</code></td><td>Starting up, first reading on the way.</td></tr>
+            <tr><td>setup</td><td><code>budi · setup</code></td><td>First run — click to install the budi daemon.</td></tr>
         </table>
 
+        <p>Click the widget to open the <a href="https://app.getbudi.dev">cloud dashboard</a>. Spend is broken down by editor so you can see exactly where your AI budget goes.</p>
+
         <h3>Install</h3>
-        <p>Search <b>budi</b> in <b>Settings → Plugins → Marketplace</b>, or run:<br/>
+        <p>Search <b>budi</b> in <b>Settings → Plugins → Marketplace</b>. Or via the CLI:<br/>
         <code>budi integrations install --with jetbrains-plugin</code></p>
 
         <h3>Prerequisites</h3>
-        <p>The <a href="https://getbudi.dev">budi daemon</a> must be installed and running. Run <code>budi init</code> to get started.</p>
-
-        <p>JetBrains-rooted usage is tracked under the <code>jetbrains</code> surface so the <a href="https://app.getbudi.dev">cloud dashboard</a> can break costs down by editor. Click the widget to jump there.</p>
+        <p>budi needs a local <a href="https://getbudi.dev">daemon</a> to read your AI usage. Install it with <code>budi init</code> — it starts automatically and runs in the background.</p>
 
         <h3>Ecosystem</h3>
         <p>
-            <a href="https://getbudi.dev">budi</a> (daemon) ·
-            <a href="https://github.com/anthropics/budi-cursor">budi-cursor</a> (Cursor/VS Code extension) ·
+            <a href="https://github.com/siropkin/budi">budi</a> (daemon + CLI) ·
+            <a href="https://github.com/siropkin/budi-cursor">budi-cursor</a> (VS Code / Cursor extension) ·
             <a href="https://app.getbudi.dev">budi-cloud</a> (dashboard) ·
             <a href="https://getbudi.dev">getbudi.dev</a>
         </p>
