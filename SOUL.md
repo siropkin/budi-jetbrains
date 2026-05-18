@@ -80,6 +80,10 @@ No tool window, no session list, no vitals grid, no tips feed. If real usage dem
 - `src/main/resources/META-INF/plugin.xml` — plugin manifest; registers application services, status-bar widget factory, settings page, notification group, post-startup activity.
 - `src/test/kotlin/...` — JUnit 4 tests. Pure logic (request builder, health-state derivation, formatting, URL allowlists, upgrade-decision matrix, install commands, settings round-trip) plus an in-process `com.sun.net.httpserver` HTTP-layer test.
 
+## Issue tracking
+
+All budi repos use **GitHub Issues** as the issue tracker. File bugs, feature requests, and tasks as GitHub issues on the relevant repo.
+
 ## Dev notes
 
 - **No business logic.** If you catch yourself computing a cost, classifying a prompt, or rolling up tokens in this repo, stop and move it into `budi-core`. The plugin must only render what the daemon returns.
