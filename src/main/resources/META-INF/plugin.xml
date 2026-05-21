@@ -7,6 +7,8 @@
     <description><![CDATA[
         <p>See what your AI coding costs at a glance. <b>budi</b> sits in your status bar and shows rolling spend for the last <b>1 day / 7 days / 30 days</b>, scoped to your JetBrains IDE. No extra panels, no popups — just three numbers in the corner.</p>
 
+        <p><img src="https://raw.githubusercontent.com/siropkin/budi-jetbrains/main/docs/screenshots/status-bar-widget.png" alt="Status bar widget showing budi spend" width="600"/></p>
+
         <p><code>budi · $2.34 1d · $12.50 7d · $48.10 30d</code></p>
 
         <table>
@@ -26,6 +28,8 @@
 
         <h3>Prerequisites</h3>
         <p>budi needs a local <a href="https://getbudi.dev">daemon</a> to read your AI usage. Install it with <code>budi init</code> — it starts automatically and runs in the background.</p>
+
+        <p><img src="https://raw.githubusercontent.com/siropkin/budi-jetbrains/main/docs/screenshots/settings-panel.png" alt="Settings panel" width="600"/></p>
 
         <h3>Ecosystem</h3>
         <p>
