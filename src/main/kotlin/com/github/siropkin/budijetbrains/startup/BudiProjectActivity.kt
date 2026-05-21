@@ -7,9 +7,7 @@ import com.github.siropkin.budijetbrains.settings.BudiSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 /**
  * Boot the poller on first project open and surface the one-time
@@ -53,8 +51,7 @@ class BudiProjectActivity : ProjectActivity {
         if (settings.state.everSawDaemon) return
         if (settings.state.dismissedInstallNotification) return
 
-        val binaryFound = withContext(Dispatchers.IO) { BudiDaemonDetector.isBinaryInstalled() }
-        if (!binaryFound) {
+        if (!BudiDaemonDetector.isBinaryInstalled()) {
             showFirstRunNotification(project)
         }
     }
