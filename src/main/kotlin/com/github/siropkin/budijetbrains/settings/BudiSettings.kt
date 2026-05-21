@@ -104,6 +104,16 @@ class BudiSettingsState {
      * during one.
      */
     var lastObservedApiVersion: Int = 0
+
+    /**
+     * Persistent "dismissed" latch for the daemon-not-installed
+     * notification (#69). Once the user clicks "Dismiss" on the install
+     * balloon, this flips to `true` and the notification never reappears.
+     * Reset to `false` when the daemon is detected for the first time
+     * (i.e. [everSawDaemon] transitions to `true`), so an uninstall +
+     * fresh-install cycle restarts the onboarding flow cleanly.
+     */
+    var dismissedInstallNotification: Boolean = false
 }
 
 @Service(Service.Level.APP)
