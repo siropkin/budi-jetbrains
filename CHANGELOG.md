@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-05-21
+
+### Added
+
+- One-time notification when the budi daemon binary is not installed, with a platform-appropriate install command. (#69)
+- Plugin icon for the JetBrains Marketplace listing. (#67)
+- Screenshots (status bar widget, settings panel, setup notification) for the Marketplace listing and README. (#68)
+
+### Fixed
+
+- Drop `withContext(Dispatchers.IO)` to avoid `SpillingKt` class-loading errors on IC-242/243.
+
 ## [0.1.4] - 2026-05-18
 
 Updated plugin.xml description to sync with Cursor marketplace listing.
@@ -80,7 +92,8 @@ Code quality & hygiene milestone — no user-visible behavior changes. Closes th
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
 
-[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.4...HEAD
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/siropkin/budi-jetbrains/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...0.1.4
 [0.1.3]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/siropkin/budi-jetbrains/compare/0.1.1...0.1.2
