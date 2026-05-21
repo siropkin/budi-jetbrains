@@ -7,9 +7,7 @@
 
 See what your AI coding costs at a glance. **budi** sits in your status bar and shows rolling spend for the last **1 day / 7 days / 30 days**, scoped to your JetBrains IDE. No extra panels, no popups — just three numbers in the corner.
 
-```
-budi · $2.34 1d · $12.50 7d · $48.10 30d
-```
+![Status bar widget showing budi spend](docs/screenshots/status-bar-widget.png)
 
 Click the widget to open the [cloud dashboard](https://app.getbudi.dev). Spend is broken down by editor so you can see exactly where your AI budget goes.
 
@@ -39,9 +37,13 @@ budi needs a local [daemon](https://getbudi.dev) to read your AI usage. Install 
 
 If the daemon isn't installed yet, the plugin shows a sticky balloon with the platform-specific install command. The command is never auto-executed — you copy and run it yourself.
 
+![Setup notification on first run](docs/screenshots/setup-notification.png)
+
 ## Settings
 
 <kbd>Settings</kbd> → <kbd>Tools</kbd> → <kbd>budi</kbd> exposes daemon URL, cloud endpoint, polling interval, the `includeOtherSurfaces` opt-out, and a read-only **Detected sources** row showing what the daemon is tailing for `surface=jetbrains`.
+
+![Settings panel](docs/screenshots/settings-panel.png)
 
 ## Troubleshooting
 
