@@ -92,8 +92,8 @@ Code quality & hygiene milestone — no user-visible behavior changes. Closes th
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
 
-[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/v0.1.5...HEAD
-[0.1.5]: https://github.com/siropkin/budi-jetbrains/compare/v0.1.4...v0.1.5
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.5...HEAD
+[0.1.5]: https://github.com/siropkin/budi-jetbrains/compare/0.1.4...0.1.5
 [0.1.4]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...0.1.4
 [0.1.3]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/siropkin/budi-jetbrains/compare/0.1.1...0.1.2
