@@ -2,6 +2,7 @@ package com.github.siropkin.budijetbrains.notifier
 
 import com.github.siropkin.budijetbrains.install.currentInstallPlatform
 import com.github.siropkin.budijetbrains.install.installCommandForPlatform
+import com.github.siropkin.budijetbrains.settings.BudiSettings
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -16,18 +17,18 @@ import java.awt.datatransfer.StringSelection
 internal const val BUDI_NOTIFICATION_GROUP = "Budi"
 
 /**
- * First-run welcome notification (parity with budi-cursor#314 +
- * siropkin/budi-cursor's webview welcome). The IDE-native equivalent of
- * a webview is a sticky balloon notification with two actions:
+ * One-time install notification shown when the budi daemon binary is
+ * not found on `$PATH` (#69). The IDE-native equivalent of a webview
+ * is a sticky balloon notification with two actions:
  *
  * - **Show install command** — opens an information dialog with the
  *   platform-specific install one-liner; "Copy" puts it on the
  *   clipboard. The command is never executed automatically — the user
  *   must paste and run it themselves so they see what they are running
  *   first.
- * - **Dismiss** — expires the balloon. The poller will not show it
- *   again on this project; it reappears on the next IDE start if the
- *   daemon is still missing.
+ * - **Dismiss** — expires the balloon and persists the
+ *   `dismissedInstallNotification` flag so it never reappears, even
+ *   on subsequent IDE launches.
  *
  * Notification copy is a security-sensitive surface — the install
  * command embedded in the dialog must not drift from
@@ -76,6 +77,7 @@ internal fun showFirstRunNotification(project: Project) {
                 e: AnActionEvent,
                 n: Notification,
             ) {
+                BudiSettings.getInstance().updateAndPersist { dismissedInstallNotification = true }
                 n.expire()
             }
         },

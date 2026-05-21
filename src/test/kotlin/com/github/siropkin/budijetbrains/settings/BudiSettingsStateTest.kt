@@ -17,6 +17,7 @@ class BudiSettingsStateTest {
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, s.pollingIntervalMs)
         assertFalse(s.includeOtherSurfaces)
         assertFalse(s.everSawDaemon)
+        assertFalse(s.dismissedInstallNotification)
     }
 
     @Test
@@ -38,6 +39,7 @@ class BudiSettingsStateTest {
                 pollingIntervalMs = 30_000
                 includeOtherSurfaces = true
                 everSawDaemon = true
+                dismissedInstallNotification = true
             }
         val element =
             com.intellij.util.xmlb.XmlSerializer
@@ -51,6 +53,7 @@ class BudiSettingsStateTest {
         assertEquals(original.pollingIntervalMs, restored.pollingIntervalMs)
         assertEquals(original.includeOtherSurfaces, restored.includeOtherSurfaces)
         assertEquals(original.everSawDaemon, restored.everSawDaemon)
+        assertEquals(original.dismissedInstallNotification, restored.dismissedInstallNotification)
     }
 
     @Test
@@ -70,6 +73,7 @@ class BudiSettingsStateTest {
                 .deserialize(element, BudiSettingsState::class.java)
         assertEquals("http://127.0.0.1:7878", restored.daemonUrl)
         assertFalse(restored.includeOtherSurfaces)
+        assertFalse(restored.dismissedInstallNotification)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, restored.pollingIntervalMs)
     }
 
