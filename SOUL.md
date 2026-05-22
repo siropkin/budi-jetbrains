@@ -30,7 +30,7 @@ Business logic lives in `budi-core`; this repo only renders what the daemon retu
 
 Static analysis is wired into `check`: `ktlint` (style) + `detekt` (smells). detekt findings carried over from before the rule landed are pinned in `config/detekt/detekt-baseline.xml` — track that file toward zero rather than letting it grow.
 
-Marketplace publishing is driven from `.github/workflows/release.yml` (tag → GitHub Release → `gradle publishPlugin`); there is no local `publish` script. Auto-publish is the **only** way the plugin reaches the Marketplace — manual web-UI uploads are explicitly disallowed except for the very first slug-claim.
+Marketplace publishing is driven from `.github/workflows/release.yml` (tag → GitHub Release → `gradle publishPlugin`); there is no local `publish` script. Auto-publish is the **only** way the plugin reaches the Marketplace — manual web-UI uploads are explicitly disallowed except for the very first slug-claim. Marketplace listing metadata that cannot be expressed in `plugin.xml` (Documentation / Bug Tracker / Privacy Policy URLs, the screenshot carousel) is set once via the marketplace editor; canonical values live in [`docs/marketplace-listing.md`](docs/marketplace-listing.md).
 
 Compatibility floor pinned in `gradle.properties`:
 - IntelliJ Platform `2024.2` (`pluginSinceBuild = 242`).
