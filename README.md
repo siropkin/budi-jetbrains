@@ -1,43 +1,53 @@
 # budi — JetBrains plugin
 
 [![Build](https://github.com/siropkin/budi-jetbrains/actions/workflows/build.yml/badge.svg)](https://github.com/siropkin/budi-jetbrains/actions/workflows/build.yml)
-[![Version](https://img.shields.io/jetbrains/plugin/v/31662.svg)](https://plugins.jetbrains.com/plugin/31662-budi)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/31662.svg)](https://plugins.jetbrains.com/plugin/31662-budi)
+[![JetBrains Marketplace Version](https://img.shields.io/jetbrains/plugin/v/31662.svg?label=Marketplace)](https://plugins.jetbrains.com/plugin/31662-budi)
+[![JetBrains Marketplace Downloads](https://img.shields.io/jetbrains/plugin/d/31662.svg?label=installs)](https://plugins.jetbrains.com/plugin/31662-budi)
+[![JetBrains Marketplace Rating](https://img.shields.io/jetbrains/plugin/r/rating/31662.svg?label=rating)](https://plugins.jetbrains.com/plugin/31662-budi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-
-See what your AI coding costs at a glance. **budi** sits in your status bar and shows rolling spend for the last **1 day / 7 days / 30 days**, scoped to your JetBrains IDE. No extra panels, no popups — just three numbers in the corner.
 
 ![Status bar widget showing budi spend](docs/screenshots/status-bar-widget.png)
 
-Click the widget to open the [cloud dashboard](https://app.getbudi.dev). Spend is broken down by editor so you can see exactly where your AI budget goes.
+**See what your AI coding costs, at a glance.** budi sits in your JetBrains status bar and shows rolling spend for the last **1 day / 7 days / 30 days** — no extra panels, no popups, just three numbers in the corner.
 
-## Status bar states
-
-| State   | Status bar                                | What it means                                                  |
-| ------- | ----------------------------------------- | -------------------------------------------------------------- |
-| Healthy | `budi · $X 1d · $Y 7d · $Z 30d`         | Daemon running, spend recorded in the rolling window.          |
-| Idle    | `budi · $0.00 1d · $0.00 7d · $0.00 30d` | Daemon running, no spend yet (not an error).                   |
-| Offline | `budi · offline`                          | Daemon not reachable. Run `budi doctor` to diagnose.           |
-| Loading | `budi`                                    | Starting up, first reading on the way.                         |
-| Setup   | `budi · setup`                            | First run — click to install the budi daemon.                  |
+```
+budi · $2.34 1d · $12.50 7d · $48.10 30d
+```
 
 ## Install
 
-Search **budi** in <kbd>Settings</kbd> → <kbd>Plugins</kbd> → <kbd>Marketplace</kbd>, or jump to the listing: **[plugins.jetbrains.com/plugin/31662-budi](https://plugins.jetbrains.com/plugin/31662-budi)**.
-
-Or via the CLI:
+Search **budi** in <kbd>Settings</kbd> → <kbd>Plugins</kbd> → <kbd>Marketplace</kbd>, or jump to **[plugins.jetbrains.com/plugin/31662-budi](https://plugins.jetbrains.com/plugin/31662-budi)**. Or via the CLI:
 
 ```bash
 budi integrations install --with jetbrains-plugin
 ```
 
-### Prerequisites
+Click the widget to open the [cloud dashboard](https://app.getbudi.dev). Spend is broken down by editor so you can see exactly where your AI budget goes.
+
+## Why now
+
+- **Anthropic moves Claude Code to usage-based billing on June 15.** Flat-rate plans are going away; every prompt has a price.
+- **Cursor switched to credit-based pricing** with opaque per-request costs that are hard to reason about while you code.
+
+Without a meter, you find out at the end of the month. budi shows you while you're working.
+
+## Prerequisites
 
 budi needs a local [daemon](https://getbudi.dev) to read your AI usage. Install it with `budi init` — it starts automatically and runs in the background.
 
 If the daemon isn't installed yet, the plugin shows a sticky balloon with the platform-specific install command. The command is never auto-executed — you copy and run it yourself.
 
 ![Setup notification on first run](docs/screenshots/setup-notification.png)
+
+## Status bar states
+
+| State   | Status bar                                | What it means                                                  |
+| ------- | ----------------------------------------- | -------------------------------------------------------------- |
+| Healthy | `budi · $X 1d · $Y 7d · $Z 30d`          | Daemon running, spend recorded in the rolling window.          |
+| Idle    | `budi · $0.00 1d · $0.00 7d · $0.00 30d` | Daemon running, no spend yet (not an error).                   |
+| Offline | `budi · offline`                          | Daemon not reachable. Run `budi doctor` to diagnose.           |
+| Loading | `budi`                                    | Starting up, first reading on the way.                         |
+| Setup   | `budi · setup`                            | First run — click to install the budi daemon.                  |
 
 ## Settings
 
