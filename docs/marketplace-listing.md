@@ -12,9 +12,9 @@ Most listing copy is driven from `src/main/resources/META-INF/plugin.xml` (`<nam
 | Documentation    | `https://getbudi.dev`                                |
 | Bug Tracker      | `https://github.com/siropkin/budi-jetbrains/issues`  |
 | Source Code      | `https://github.com/siropkin/budi-jetbrains`         |
-| Privacy Policy   | `https://getbudi.dev/privacy`                        |
+| Privacy Policy   | `https://github.com/siropkin/budi#privacy`           |
 
-The Privacy Policy URL depends on the `/privacy` page being live on `getbudi.dev` — tracked in [`siropkin/getbudi.dev`](https://github.com/siropkin/getbudi.dev). Until that page returns 200, leave the Privacy Policy field unset rather than pointing at a 404.
+Privacy Policy points at the `## Privacy` section of the `siropkin/budi` README (the daemon repo, where the actual data lifecycle is documented — the plugin itself only renders what the local daemon returns and transmits nothing). Swap this to `https://getbudi.dev/privacy` once that page lands (tracked in [`siropkin/getbudi.dev`](https://github.com/siropkin/getbudi.dev)) so the canonical privacy surface lives on the marketing site rather than a README anchor.
 
 ## Where else these surfaces live
 
