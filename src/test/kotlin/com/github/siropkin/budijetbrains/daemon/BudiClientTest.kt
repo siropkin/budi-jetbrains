@@ -398,6 +398,143 @@ class BudiClientPureLogicTest {
         assertFalse(isAllowedCloudEndpoint("https://attacker@app.getbudi.dev"))
         assertFalse(isAllowedCloudEndpoint("not a url"))
     }
+
+    // ── Quota helpers ───────────────────────────────────────────────
+
+    @Test
+    fun `hasQuotaData returns false when statusline is null or lacks quota fields`() {
+        assertFalse(hasQuotaData(null))
+        assertFalse(hasQuotaData(StatuslineData()))
+        assertFalse(hasQuotaData(StatuslineData(quotaUsedPercent = Double.NaN)))
+        assertFalse(hasQuotaData(StatuslineData(quotaUsedPercent = Double.POSITIVE_INFINITY)))
+    }
+
+    @Test
+    fun `hasQuotaData returns true when quota percent is finite`() {
+        assertTrue(hasQuotaData(StatuslineData(quotaUsedPercent = 0.0)))
+        assertTrue(hasQuotaData(StatuslineData(quotaUsedPercent = 67.0)))
+        assertTrue(hasQuotaData(StatuslineData(quotaUsedPercent = 100.0)))
+    }
+
+    @Test
+    fun `formatQuotaPercent rounds and handles edge cases`() {
+        assertEquals("0%", formatQuotaPercent(0.0))
+        assertEquals("67%", formatQuotaPercent(67.0))
+        assertEquals("67%", formatQuotaPercent(67.4))
+        assertEquals("68%", formatQuotaPercent(67.5))
+        assertEquals("100%", formatQuotaPercent(100.0))
+        assertEquals("0%", formatQuotaPercent(-1.0))
+        assertEquals("0%", formatQuotaPercent(Double.NaN))
+    }
+
+    @Test
+    fun `formatQuotaLine includes reset date when present`() {
+        val data = StatuslineData(quotaUsedPercent = 67.0, quotaResetsAt = "Jun 1")
+        assertEquals("67% · resets Jun 1", formatQuotaLine(data))
+    }
+
+    @Test
+    fun `formatQuotaLine omits reset when absent`() {
+        assertEquals("67%", formatQuotaLine(StatuslineData(quotaUsedPercent = 67.0)))
+        assertEquals("67%", formatQuotaLine(StatuslineData(quotaUsedPercent = 67.0, quotaResetsAt = "")))
+        assertEquals("67%", formatQuotaLine(StatuslineData(quotaUsedPercent = 67.0, quotaResetsAt = "  ")))
+    }
+
+    @Test
+    fun `formatBothLine renders 1d cost and quota percent`() {
+        val data = StatuslineData(cost1d = 2.34, quotaUsedPercent = 67.0)
+        assertEquals("$2.34 1d · 67% quota", formatBothLine(resolveCosts(data), data))
+    }
+
+    @Test
+    fun `quotaPacingLabel returns null below 70 percent`() {
+        assertNull(quotaPacingLabel(0.0))
+        assertNull(quotaPacingLabel(69.9))
+        assertNull(quotaPacingLabel(Double.NaN))
+    }
+
+    @Test
+    fun `quotaPacingLabel escalates through thresholds`() {
+        assertEquals("Quota elevated", quotaPacingLabel(70.0))
+        assertEquals("Quota elevated", quotaPacingLabel(89.9))
+        assertEquals("⚠ Quota very high", quotaPacingLabel(90.0))
+        assertEquals("⚠ Quota very high", quotaPacingLabel(95.0))
+        assertEquals("⚠ Quota critically high", quotaPacingLabel(95.1))
+        assertEquals("⚠ Quota critically high", quotaPacingLabel(100.0))
+    }
+
+    // ── buildStatusText mode variants ───────────────────────────────
+
+    @Test
+    fun `buildStatusText COST mode renders cost line (backward compat)`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0, quotaUsedPercent = 67.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.COST)
+        assertEquals("budi · ${formatCostLine(resolveCosts(data))}", text)
+    }
+
+    @Test
+    fun `buildStatusText QUOTA mode renders quota when available`() {
+        val data = StatuslineData(cost1d = 1.0, quotaUsedPercent = 67.0, quotaResetsAt = "Jun 1")
+        assertEquals("budi · 67% · resets Jun 1", buildStatusText(HealthState.GREEN, data, StatusBarMode.QUOTA))
+    }
+
+    @Test
+    fun `buildStatusText QUOTA mode falls back to cost when no quota data`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.QUOTA)
+        assertEquals("budi · ${formatCostLine(resolveCosts(data))}", text)
+    }
+
+    @Test
+    fun `buildStatusText BOTH mode renders combined line`() {
+        val data = StatuslineData(cost1d = 2.34, quotaUsedPercent = 67.0)
+        assertEquals("budi · $2.34 1d · 67% quota", buildStatusText(HealthState.GREEN, data, StatusBarMode.BOTH))
+    }
+
+    @Test
+    fun `buildStatusText BOTH mode falls back to cost when no quota data`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.BOTH)
+        assertEquals("budi · ${formatCostLine(resolveCosts(data))}", text)
+    }
+
+    @Test
+    fun `buildStatusText mode is ignored for non-healthy states`() {
+        assertEquals("budi · setup", buildStatusText(HealthState.FIRST_RUN, null, StatusBarMode.QUOTA))
+        assertEquals("budi · offline", buildStatusText(HealthState.RED, null, StatusBarMode.BOTH))
+        assertEquals("budi", buildStatusText(HealthState.GRAY, null, StatusBarMode.QUOTA))
+    }
+
+    // ── buildTooltip quota section ──────────────────────────────────
+
+    @Test
+    fun `buildTooltip includes quota section when data present`() {
+        val data = StatuslineData(cost1d = 1.0, quotaUsedPercent = 67.0, quotaResetsAt = "Jun 1")
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Quota: 67% used · resets Jun 1"))
+    }
+
+    @Test
+    fun `buildTooltip omits quota section when data absent`() {
+        val data = StatuslineData(cost1d = 1.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("Quota:"))
+    }
+
+    @Test
+    fun `buildTooltip shows pacing warning at high quota usage`() {
+        val data = StatuslineData(cost1d = 1.0, quotaUsedPercent = 96.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("⚠ Quota critically high"))
+    }
+
+    @Test
+    fun `buildTooltip omits pacing warning when quota usage is comfortable`() {
+        val data = StatuslineData(cost1d = 1.0, quotaUsedPercent = 50.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("Quota elevated"))
+        assertFalse(tip.contains("⚠"))
+    }
 }
 
 class BudiClientHttpTest {
@@ -532,6 +669,35 @@ class BudiClientHttpTest {
     @Test
     fun `fetchSources returns null when daemon offline`() {
         assertNull(client.fetchSources("http://127.0.0.1:1"))
+    }
+
+    @Test
+    fun `fetchStatusline parses quota fields when present`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body =
+                """{"cost_1d":1.5,"quota_used_percent":67.0,"quota_resets_at":"Jun 1"}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertEquals(67.0, data.quotaUsedPercent!!, 1e-9)
+        assertEquals("Jun 1", data.quotaResetsAt)
+    }
+
+    @Test
+    fun `fetchStatusline leaves quota fields null when daemon omits them`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body = """{"cost_1d":1.5}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertNull(data.quotaUsedPercent)
+        assertNull(data.quotaResetsAt)
     }
 
     @Test

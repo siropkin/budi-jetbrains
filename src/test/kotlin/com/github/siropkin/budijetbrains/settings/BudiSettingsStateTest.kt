@@ -2,6 +2,7 @@ package com.github.siropkin.budijetbrains.settings
 
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_CLOUD_ENDPOINT
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_DAEMON_URL
+import com.github.siropkin.budijetbrains.daemon.StatusBarMode
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,6 +16,7 @@ class BudiSettingsStateTest {
         assertEquals(DEFAULT_DAEMON_URL, s.daemonUrl)
         assertEquals(DEFAULT_CLOUD_ENDPOINT, s.cloudEndpoint)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, s.pollingIntervalMs)
+        assertEquals(StatusBarMode.COST, s.statusBarMode)
         assertFalse(s.includeOtherSurfaces)
         assertFalse(s.everSawDaemon)
         assertFalse(s.dismissedInstallNotification)
@@ -37,6 +39,7 @@ class BudiSettingsStateTest {
                 daemonUrl = "http://localhost:9999"
                 cloudEndpoint = "https://staging.app.getbudi.dev"
                 pollingIntervalMs = 30_000
+                statusBarMode = StatusBarMode.BOTH
                 includeOtherSurfaces = true
                 everSawDaemon = true
                 dismissedInstallNotification = true
@@ -51,6 +54,7 @@ class BudiSettingsStateTest {
         assertEquals(original.daemonUrl, restored.daemonUrl)
         assertEquals(original.cloudEndpoint, restored.cloudEndpoint)
         assertEquals(original.pollingIntervalMs, restored.pollingIntervalMs)
+        assertEquals(original.statusBarMode, restored.statusBarMode)
         assertEquals(original.includeOtherSurfaces, restored.includeOtherSurfaces)
         assertEquals(original.everSawDaemon, restored.everSawDaemon)
         assertEquals(original.dismissedInstallNotification, restored.dismissedInstallNotification)
@@ -72,6 +76,7 @@ class BudiSettingsStateTest {
             com.intellij.util.xmlb.XmlSerializer
                 .deserialize(element, BudiSettingsState::class.java)
         assertEquals("http://127.0.0.1:7878", restored.daemonUrl)
+        assertEquals(StatusBarMode.COST, restored.statusBarMode)
         assertFalse(restored.includeOtherSurfaces)
         assertFalse(restored.dismissedInstallNotification)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, restored.pollingIntervalMs)

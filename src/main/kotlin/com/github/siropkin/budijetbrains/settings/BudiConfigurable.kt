@@ -3,6 +3,7 @@ package com.github.siropkin.budijetbrains.settings
 import com.github.siropkin.budijetbrains.daemon.BudiClient
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_CLOUD_ENDPOINT
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_DAEMON_URL
+import com.github.siropkin.budijetbrains.daemon.StatusBarMode
 import com.github.siropkin.budijetbrains.daemon.isAllowedCloudEndpoint
 import com.github.siropkin.budijetbrains.daemon.isLoopbackDaemonUrl
 import com.github.siropkin.budijetbrains.daemon.renderDetectedSourcesHtml
@@ -10,6 +11,7 @@ import com.github.siropkin.budijetbrains.poller.BudiPoller
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
@@ -18,6 +20,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 
 /**
@@ -41,8 +44,11 @@ class BudiConfigurable : Configurable {
     private var daemonUrlField = settings.state.daemonUrl
     private var cloudEndpointField = settings.state.cloudEndpoint
     private var pollingIntervalField = settings.state.pollingIntervalMs
+    private var statusBarModeField = settings.state.statusBarMode
     private var includeOtherSurfacesField = settings.state.includeOtherSurfaces
     private var suppressUpdateNotificationField = settings.state.suppressUpdateNotification
+
+    private val modeCombo = ComboBox(DefaultComboBoxModel(StatusBarMode.entries.toTypedArray()))
 
     private val detectedSourcesLabel = JBLabel(LOADING_SOURCES_HTML)
 
@@ -81,6 +87,15 @@ class BudiConfigurable : Configurable {
                         .bindIntText({ pollingIntervalField }, { pollingIntervalField = it })
                         .columns(8)
                         .comment("How often to refresh the status bar. Minimum ${MIN_POLLING_INTERVAL_MS / 1000}s.")
+                }
+                row("Status bar mode:") {
+                    cell(modeCombo)
+                        .comment(
+                            "COST — rolling dollar totals (default). " +
+                                "QUOTA — quota percentage + reset date (Copilot Pro). " +
+                                "BOTH — 1d cost + quota. " +
+                                "Falls back to COST when the daemon doesn't return quota fields.",
+                        )
                 }
                 row {
                     cell(JBCheckBox("Include other surfaces (drop the ?surface=jetbrains filter)"))
@@ -133,9 +148,11 @@ class BudiConfigurable : Configurable {
 
     override fun isModified(): Boolean {
         panel.apply() // copy UI → fields
+        statusBarModeField = modeCombo.item
         return daemonUrlField != settings.state.daemonUrl ||
             cloudEndpointField != settings.state.cloudEndpoint ||
             pollingIntervalField != settings.state.pollingIntervalMs ||
+            statusBarModeField != settings.state.statusBarMode ||
             includeOtherSurfacesField != settings.state.includeOtherSurfaces ||
             suppressUpdateNotificationField != settings.state.suppressUpdateNotification
     }
@@ -178,10 +195,12 @@ class BudiConfigurable : Configurable {
                 "Polling interval must be at least ${MIN_POLLING_INTERVAL_MS / 1000}s.",
             )
         }
+        statusBarModeField = modeCombo.item
         settings.updateAndPersist {
             daemonUrl = daemonUrlField
             cloudEndpoint = cloudEndpointField
             pollingIntervalMs = pollingIntervalField
+            statusBarMode = statusBarModeField
             includeOtherSurfaces = includeOtherSurfacesField
             suppressUpdateNotification = suppressUpdateNotificationField
         }
@@ -192,8 +211,10 @@ class BudiConfigurable : Configurable {
         daemonUrlField = settings.state.daemonUrl
         cloudEndpointField = settings.state.cloudEndpoint
         pollingIntervalField = settings.state.pollingIntervalMs
+        statusBarModeField = settings.state.statusBarMode
         includeOtherSurfacesField = settings.state.includeOtherSurfaces
         suppressUpdateNotificationField = settings.state.suppressUpdateNotification
+        modeCombo.item = statusBarModeField
         panel.reset()
     }
 
