@@ -17,6 +17,7 @@ class BudiSettingsStateTest {
         assertEquals(DEFAULT_CLOUD_ENDPOINT, s.cloudEndpoint)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, s.pollingIntervalMs)
         assertEquals(StatusBarMode.COST, s.statusBarMode)
+        assertFalse(s.showBurnRate)
         assertFalse(s.includeOtherSurfaces)
         assertFalse(s.everSawDaemon)
         assertFalse(s.dismissedInstallNotification)
@@ -40,6 +41,7 @@ class BudiSettingsStateTest {
                 cloudEndpoint = "https://staging.app.getbudi.dev"
                 pollingIntervalMs = 30_000
                 statusBarMode = StatusBarMode.BOTH
+                showBurnRate = true
                 includeOtherSurfaces = true
                 everSawDaemon = true
                 dismissedInstallNotification = true
@@ -55,6 +57,7 @@ class BudiSettingsStateTest {
         assertEquals(original.cloudEndpoint, restored.cloudEndpoint)
         assertEquals(original.pollingIntervalMs, restored.pollingIntervalMs)
         assertEquals(original.statusBarMode, restored.statusBarMode)
+        assertEquals(original.showBurnRate, restored.showBurnRate)
         assertEquals(original.includeOtherSurfaces, restored.includeOtherSurfaces)
         assertEquals(original.everSawDaemon, restored.everSawDaemon)
         assertEquals(original.dismissedInstallNotification, restored.dismissedInstallNotification)
@@ -77,6 +80,7 @@ class BudiSettingsStateTest {
                 .deserialize(element, BudiSettingsState::class.java)
         assertEquals("http://127.0.0.1:7878", restored.daemonUrl)
         assertEquals(StatusBarMode.COST, restored.statusBarMode)
+        assertFalse(restored.showBurnRate)
         assertFalse(restored.includeOtherSurfaces)
         assertFalse(restored.dismissedInstallNotification)
         assertEquals(DEFAULT_POLLING_INTERVAL_MS, restored.pollingIntervalMs)

@@ -45,6 +45,7 @@ class BudiConfigurable : Configurable {
     private var cloudEndpointField = settings.state.cloudEndpoint
     private var pollingIntervalField = settings.state.pollingIntervalMs
     private var statusBarModeField = settings.state.statusBarMode
+    private var showBurnRateField = settings.state.showBurnRate
     private var includeOtherSurfacesField = settings.state.includeOtherSurfaces
     private var suppressUpdateNotificationField = settings.state.suppressUpdateNotification
 
@@ -95,6 +96,14 @@ class BudiConfigurable : Configurable {
                                 "QUOTA — quota percentage + reset date (Copilot Pro). " +
                                 "BOTH — 1d cost + quota. " +
                                 "Falls back to COST when the daemon doesn't return quota fields.",
+                        )
+                }
+                row {
+                    cell(JBCheckBox("Show burn rate in status bar"))
+                        .bindSelected({ showBurnRateField }, { showBurnRateField = it })
+                        .comment(
+                            "When checked, appends the active-session burn rate (\$X.XX/hr) to the status bar text. " +
+                                "The burn rate is always visible in the tooltip when the daemon reports it.",
                         )
                 }
                 row {
@@ -153,6 +162,7 @@ class BudiConfigurable : Configurable {
             cloudEndpointField != settings.state.cloudEndpoint ||
             pollingIntervalField != settings.state.pollingIntervalMs ||
             statusBarModeField != settings.state.statusBarMode ||
+            showBurnRateField != settings.state.showBurnRate ||
             includeOtherSurfacesField != settings.state.includeOtherSurfaces ||
             suppressUpdateNotificationField != settings.state.suppressUpdateNotification
     }
@@ -201,6 +211,7 @@ class BudiConfigurable : Configurable {
             cloudEndpoint = cloudEndpointField
             pollingIntervalMs = pollingIntervalField
             statusBarMode = statusBarModeField
+            showBurnRate = showBurnRateField
             includeOtherSurfaces = includeOtherSurfacesField
             suppressUpdateNotification = suppressUpdateNotificationField
         }
@@ -212,6 +223,7 @@ class BudiConfigurable : Configurable {
         cloudEndpointField = settings.state.cloudEndpoint
         pollingIntervalField = settings.state.pollingIntervalMs
         statusBarModeField = settings.state.statusBarMode
+        showBurnRateField = settings.state.showBurnRate
         includeOtherSurfacesField = settings.state.includeOtherSurfaces
         suppressUpdateNotificationField = settings.state.suppressUpdateNotification
         modeCombo.item = statusBarModeField
