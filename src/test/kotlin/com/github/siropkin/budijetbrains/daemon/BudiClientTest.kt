@@ -880,7 +880,10 @@ class BudiClientHttpTest {
     fun `fetchStatusline parses active-session fields when present`() {
         server.createContext("/analytics/statusline") { exchange: HttpExchange ->
             val body =
-                """{"cost_1d":1.5,"cost_active_block_cents":42.0,"active_block_started_at":"2025-01-01T00:00:00Z","burn_rate_cents_per_hour":210.0}"""
+                """{"cost_1d":1.5,""" +
+                    """"cost_active_block_cents":42.0,""" +
+                    """"active_block_started_at":"2025-01-01T00:00:00Z",""" +
+                    """"burn_rate_cents_per_hour":210.0}"""
             exchange.responseHeaders.add("Content-Type", "application/json")
             exchange.sendResponseHeaders(200, body.length.toLong())
             exchange.responseBody.use { it.write(body.toByteArray()) }

@@ -366,6 +366,19 @@ internal fun quotaPacingLabel(usedPercent: Double): String? =
         else -> null
     }
 
+/** Append the quota section to the tooltip lines (if quota data present). */
+private fun appendQuotaSection(
+    lines: MutableList<String>,
+    statusline: StatuslineData?,
+) {
+    if (!hasQuotaData(statusline)) return
+    lines += ""
+    val pct = statusline!!.quotaUsedPercent!!
+    val resetSuffix = if (!statusline.quotaResetsAt.isNullOrBlank()) " · resets ${statusline.quotaResetsAt}" else ""
+    lines += "Quota: ${formatQuotaPercent(pct)} used$resetSuffix"
+    quotaPacingLabel(pct)?.let { lines += it }
+}
+
 /**
  * Build a status-bar tooltip. Mirrors `buildTooltip` in budi-cursor with
  * the host-dependent branches collapsed to the JetBrains-only path.
@@ -399,13 +412,7 @@ internal fun buildTooltip(
     lines += "1d  ${formatCost(costs.cost1d)}"
     lines += "7d  ${formatCost(costs.cost7d)}"
     lines += "30d ${formatCost(costs.cost30d)}"
-    if (hasQuotaData(statusline)) {
-        lines += ""
-        val pct = statusline!!.quotaUsedPercent!!
-        val resetSuffix = if (!statusline.quotaResetsAt.isNullOrBlank()) " · resets ${statusline.quotaResetsAt}" else ""
-        lines += "Quota: ${formatQuotaPercent(pct)} used$resetSuffix"
-        quotaPacingLabel(pct)?.let { lines += it }
-    }
+    appendQuotaSection(lines, statusline)
     lines += ""
     val contributing = statusline?.contributingProviders.orEmpty()
     if (contributing.size > 1) {
