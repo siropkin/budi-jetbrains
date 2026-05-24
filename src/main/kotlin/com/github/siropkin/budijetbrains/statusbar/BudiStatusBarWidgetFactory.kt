@@ -61,6 +61,7 @@ internal class BudiStatusBarWidget(
                 buildStatusText(
                     BudiAppState.getInstance().lastState,
                     BudiAppState.getInstance().lastStatusline,
+                    BudiSettings.getInstance().state.statusBarMode,
                 )
 
             override fun getAlignment(): Float = 0f

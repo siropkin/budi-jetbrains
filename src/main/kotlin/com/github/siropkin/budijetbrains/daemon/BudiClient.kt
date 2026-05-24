@@ -109,7 +109,19 @@ internal data class StatuslineData(
     @SerializedName("active_provider") val activeProvider: String? = null,
     @SerializedName("provider_scope") val providerScope: String? = null,
     @SerializedName("contributing_providers") val contributingProviders: List<String>? = null,
+    @SerializedName("quota_used_percent") val quotaUsedPercent: Double? = null,
+    @SerializedName("quota_resets_at") val quotaResetsAt: String? = null,
 )
+
+/**
+ * Status bar display mode — which signal dominates the widget.
+ * Mirrors budi-cursor's `statusBarMode` setting 1:1.
+ */
+enum class StatusBarMode {
+    COST,
+    QUOTA,
+    BOTH,
+}
 
 /** Resolved rolling-cost triple consumed by status-bar / tooltip rendering. */
 internal data class ResolvedCosts(
@@ -195,6 +207,45 @@ internal fun formatCostLine(costs: ResolvedCosts): String =
         "${formatCost(costs.cost30d)} 30d",
     ).joinToString(" · ")
 
+/** True when the daemon returned usable quota fields. */
+internal fun hasQuotaData(statusline: StatuslineData?): Boolean {
+    val pct = statusline?.quotaUsedPercent ?: return false
+    return pct.isFinite()
+}
+
+/**
+ * Format the quota percentage for display. Rounds to the nearest
+ * integer — fractional precision isn't meaningful for a progress
+ * indicator.
+ */
+internal fun formatQuotaPercent(percent: Double): String {
+    if (!percent.isFinite() || percent < 0.0) return "0%"
+    return "${Math.round(percent)}%"
+}
+
+/**
+ * Build the quota portion of the status line.
+ * `budi · 67% · resets Jun 1` (with reset date) or `budi · 67%`
+ * (without).
+ */
+internal fun formatQuotaLine(statusline: StatuslineData): String {
+    val pct = formatQuotaPercent(statusline.quotaUsedPercent ?: 0.0)
+    val reset = statusline.quotaResetsAt
+    return if (!reset.isNullOrBlank()) "$pct · resets $reset" else pct
+}
+
+/**
+ * Build the combined cost + quota status line for BOTH mode.
+ * `$2.34 1d · 67% quota`
+ */
+internal fun formatBothLine(
+    costs: ResolvedCosts,
+    statusline: StatuslineData,
+): String {
+    val pct = formatQuotaPercent(statusline.quotaUsedPercent ?: 0.0)
+    return "${formatCost(costs.cost1d)} 1d · $pct quota"
+}
+
 /**
  * Decide which health state the status bar is in. Mirrors
  * `deriveHealthState` in budi-cursor 1:1.
@@ -216,16 +267,48 @@ internal fun deriveHealthState(
  * Build the status bar text. Mirrors `buildStatusText` in budi-cursor.
  * Health state drives the copy variants (`budi`, `budi · setup`,
  * `budi · offline`, `budi · $X 1d · …`); no leading glyph.
+ *
+ * [mode] selects the signal rendered in the GREEN/YELLOW branch:
+ *   COST  — `budi · $X 1d · $Y 7d · $Z 30d` (default)
+ *   QUOTA — `budi · 67% · resets Jun 1` (falls back to COST when
+ *           the daemon doesn't return quota fields)
+ *   BOTH  — `budi · $X 1d · 67% quota` (falls back to COST when
+ *           quota fields are absent)
  */
 internal fun buildStatusText(
     state: HealthState,
     statusline: StatuslineData?,
-): String =
-    when (state) {
+    mode: StatusBarMode = StatusBarMode.COST,
+): String {
+    val data = statusline ?: StatuslineData()
+    return when (state) {
         HealthState.FIRST_RUN -> "budi · setup"
         HealthState.RED -> "budi · offline"
         HealthState.GRAY -> "budi"
-        HealthState.GREEN, HealthState.YELLOW -> "budi · ${formatCostLine(resolveCosts(statusline ?: StatuslineData()))}"
+        HealthState.GREEN, HealthState.YELLOW -> {
+            val body =
+                when {
+                    mode == StatusBarMode.QUOTA && hasQuotaData(statusline) -> formatQuotaLine(data)
+                    mode == StatusBarMode.BOTH && hasQuotaData(statusline) -> formatBothLine(resolveCosts(data), data)
+                    else -> formatCostLine(resolveCosts(data))
+                }
+            "budi · $body"
+        }
+    }
+}
+
+/**
+ * Pacing label for the tooltip when quota usage exceeds comfortable
+ * thresholds. Returns null when usage is below 70% (no warning).
+ * Mirrors budi-cursor's tooltip color hints.
+ */
+internal fun quotaPacingLabel(usedPercent: Double): String? =
+    when {
+        !usedPercent.isFinite() -> null
+        usedPercent > 95.0 -> "⚠ Quota critically high"
+        usedPercent >= 90.0 -> "⚠ Quota very high"
+        usedPercent >= 70.0 -> "Quota elevated"
+        else -> null
     }
 
 /**
@@ -257,6 +340,13 @@ internal fun buildTooltip(
     lines += "1d  ${formatCost(costs.cost1d)}"
     lines += "7d  ${formatCost(costs.cost7d)}"
     lines += "30d ${formatCost(costs.cost30d)}"
+    if (hasQuotaData(statusline)) {
+        lines += ""
+        val pct = statusline!!.quotaUsedPercent!!
+        val resetSuffix = if (!statusline.quotaResetsAt.isNullOrBlank()) " · resets ${statusline.quotaResetsAt}" else ""
+        lines += "Quota: ${formatQuotaPercent(pct)} used$resetSuffix"
+        quotaPacingLabel(pct)?.let { lines += it }
+    }
     lines += ""
     val contributing = statusline?.contributingProviders.orEmpty()
     if (contributing.size > 1) {

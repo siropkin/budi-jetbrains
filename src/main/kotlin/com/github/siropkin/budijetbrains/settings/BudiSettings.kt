@@ -2,6 +2,7 @@ package com.github.siropkin.budijetbrains.settings
 
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_CLOUD_ENDPOINT
 import com.github.siropkin.budijetbrains.daemon.DEFAULT_DAEMON_URL
+import com.github.siropkin.budijetbrains.daemon.StatusBarMode
 import com.github.siropkin.budijetbrains.daemon.isAllowedCloudEndpoint
 import com.github.siropkin.budijetbrains.daemon.isLoopbackDaemonUrl
 import com.intellij.openapi.application.ApplicationManager
@@ -61,6 +62,15 @@ class BudiSettingsState {
      * scheduled refresh.
      */
     var pollingIntervalMs: Int = DEFAULT_POLLING_INTERVAL_MS
+
+    /**
+     * Status bar display mode. Default: [StatusBarMode.COST] — today's
+     * behavior. `QUOTA` renders quota percentage + reset date (falls back
+     * to cost when the daemon doesn't return quota fields). `BOTH` shows
+     * 1d cost + quota percentage. No poller restart needed; takes effect
+     * on the next widget repaint.
+     */
+    var statusBarMode: StatusBarMode = StatusBarMode.COST
 
     /**
      * When true, the plugin omits the `?surface=jetbrains` filter so the
