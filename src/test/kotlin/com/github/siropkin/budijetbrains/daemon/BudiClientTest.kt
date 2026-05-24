@@ -535,6 +535,182 @@ class BudiClientPureLogicTest {
         assertFalse(tip.contains("Quota elevated"))
         assertFalse(tip.contains("⚠"))
     }
+
+    // ── Active-session burn rate ────────────────────────────────────
+
+    @Test
+    fun `hasActiveSession returns false when fields are missing`() {
+        assertFalse(hasActiveSession(null))
+        assertFalse(hasActiveSession(StatuslineData()))
+        assertFalse(hasActiveSession(StatuslineData(costActiveBlockCents = 42.0)))
+        assertFalse(hasActiveSession(StatuslineData(burnRateCentsPerHour = 210.0)))
+        assertFalse(
+            hasActiveSession(
+                StatuslineData(costActiveBlockCents = 42.0, burnRateCentsPerHour = 210.0),
+            ),
+        )
+    }
+
+    @Test
+    fun `hasActiveSession returns false when values are non-finite`() {
+        assertFalse(
+            hasActiveSession(
+                StatuslineData(
+                    costActiveBlockCents = Double.NaN,
+                    activeBlockStartedAt = "2025-01-01T00:00:00Z",
+                    burnRateCentsPerHour = 210.0,
+                ),
+            ),
+        )
+        assertFalse(
+            hasActiveSession(
+                StatuslineData(
+                    costActiveBlockCents = 42.0,
+                    activeBlockStartedAt = "2025-01-01T00:00:00Z",
+                    burnRateCentsPerHour = Double.POSITIVE_INFINITY,
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `hasActiveSession returns true when all three fields are present and finite`() {
+        assertTrue(
+            hasActiveSession(
+                StatuslineData(
+                    costActiveBlockCents = 42.0,
+                    activeBlockStartedAt = "2025-01-01T00:00:00Z",
+                    burnRateCentsPerHour = 210.0,
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `activeBlockElapsedMinutes returns null for missing or bad timestamps`() {
+        assertNull(activeBlockElapsedMinutes(null))
+        assertNull(activeBlockElapsedMinutes(""))
+        assertNull(activeBlockElapsedMinutes("not-a-timestamp"))
+    }
+
+    @Test
+    fun `activeBlockElapsedMinutes returns non-negative for past timestamps`() {
+        val tenMinAgo =
+            java.time.Instant
+                .now()
+                .minus(java.time.Duration.ofMinutes(10))
+                .toString()
+        val elapsed = activeBlockElapsedMinutes(tenMinAgo)
+        assertNotNull(elapsed)
+        assertTrue(elapsed >= 9)
+        assertTrue(elapsed <= 11)
+    }
+
+    @Test
+    fun `activeBlockElapsedMinutes clamps future timestamps to zero`() {
+        val future =
+            java.time.Instant
+                .now()
+                .plus(java.time.Duration.ofHours(1))
+                .toString()
+        assertEquals(0L, activeBlockElapsedMinutes(future))
+    }
+
+    @Test
+    fun `formatBurnRateSuffix returns null when no rate`() {
+        assertNull(formatBurnRateSuffix(null))
+        assertNull(formatBurnRateSuffix(StatuslineData()))
+        assertNull(formatBurnRateSuffix(StatuslineData(burnRateCentsPerHour = Double.NaN)))
+    }
+
+    @Test
+    fun `formatBurnRateSuffix formats cents to dollars`() {
+        assertEquals("$2.10/hr", formatBurnRateSuffix(StatuslineData(burnRateCentsPerHour = 210.0)))
+        assertEquals("$0.50/hr", formatBurnRateSuffix(StatuslineData(burnRateCentsPerHour = 50.0)))
+    }
+
+    @Test
+    fun `formatActiveSessionLine returns null when inactive`() {
+        assertNull(formatActiveSessionLine(StatuslineData()))
+    }
+
+    @Test
+    fun `formatActiveSessionLine renders cost and rate with elapsed time`() {
+        val tenMinAgo =
+            java.time.Instant
+                .now()
+                .minus(java.time.Duration.ofMinutes(10))
+                .toString()
+        val data =
+            StatuslineData(
+                costActiveBlockCents = 42.0,
+                activeBlockStartedAt = tenMinAgo,
+                burnRateCentsPerHour = 210.0,
+            )
+        val line = formatActiveSessionLine(data)
+        assertNotNull(line)
+        assertTrue(line.startsWith("Active session: \$0.42"))
+        assertTrue(line.contains("min"))
+        assertTrue(line.endsWith("\$2.10/hr"))
+    }
+
+    @Test
+    fun `buildStatusText appends burn rate when showBurnRate is true`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0, burnRateCentsPerHour = 210.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.COST, showBurnRate = true)
+        assertTrue(text.endsWith(" · \$2.10/hr"))
+    }
+
+    @Test
+    fun `buildStatusText omits burn rate when showBurnRate is false`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0, burnRateCentsPerHour = 210.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.COST, showBurnRate = false)
+        assertFalse(text.contains("/hr"))
+    }
+
+    @Test
+    fun `buildStatusText showBurnRate gracefully handles null rate`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val text = buildStatusText(HealthState.GREEN, data, StatusBarMode.COST, showBurnRate = true)
+        assertFalse(text.contains("/hr"))
+        assertEquals("budi · ${formatCostLine(resolveCosts(data))}", text)
+    }
+
+    @Test
+    fun `buildStatusText showBurnRate ignored for non-healthy states`() {
+        assertEquals("budi · setup", buildStatusText(HealthState.FIRST_RUN, null, showBurnRate = true))
+        assertEquals("budi · offline", buildStatusText(HealthState.RED, null, showBurnRate = true))
+        assertEquals("budi", buildStatusText(HealthState.GRAY, null, showBurnRate = true))
+    }
+
+    @Test
+    fun `buildTooltip includes active session line when data present`() {
+        val tenMinAgo =
+            java.time.Instant
+                .now()
+                .minus(java.time.Duration.ofMinutes(10))
+                .toString()
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                activeProvider = "copilot_chat",
+                costActiveBlockCents = 42.0,
+                activeBlockStartedAt = tenMinAgo,
+                burnRateCentsPerHour = 210.0,
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Active session: \$0.42"))
+        assertTrue(tip.contains("\$2.10/hr"))
+    }
+
+    @Test
+    fun `buildTooltip omits active session line when fields are null`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("Active session"))
+    }
 }
 
 class BudiClientHttpTest {
@@ -698,6 +874,40 @@ class BudiClientHttpTest {
         assertNotNull(data)
         assertNull(data.quotaUsedPercent)
         assertNull(data.quotaResetsAt)
+    }
+
+    @Test
+    fun `fetchStatusline parses active-session fields when present`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body =
+                """{"cost_1d":1.5,""" +
+                    """"cost_active_block_cents":42.0,""" +
+                    """"active_block_started_at":"2025-01-01T00:00:00Z",""" +
+                    """"burn_rate_cents_per_hour":210.0}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertEquals(42.0, data.costActiveBlockCents!!, 1e-9)
+        assertEquals("2025-01-01T00:00:00Z", data.activeBlockStartedAt)
+        assertEquals(210.0, data.burnRateCentsPerHour!!, 1e-9)
+    }
+
+    @Test
+    fun `fetchStatusline leaves active-session fields null when daemon omits them`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body = """{"cost_1d":1.5}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertNull(data.costActiveBlockCents)
+        assertNull(data.activeBlockStartedAt)
+        assertNull(data.burnRateCentsPerHour)
     }
 
     @Test

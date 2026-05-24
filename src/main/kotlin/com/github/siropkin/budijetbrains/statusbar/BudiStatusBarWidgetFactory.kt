@@ -57,12 +57,15 @@ internal class BudiStatusBarWidget(
     // Marketplace plugin verifier flags as deprecated API usage.
     private val presentation =
         object : StatusBarWidget.TextPresentation {
-            override fun getText(): String =
-                buildStatusText(
+            override fun getText(): String {
+                val settings = BudiSettings.getInstance()
+                return buildStatusText(
                     BudiAppState.getInstance().lastState,
                     BudiAppState.getInstance().lastStatusline,
-                    BudiSettings.getInstance().state.statusBarMode,
+                    settings.state.statusBarMode,
+                    settings.state.showBurnRate,
                 )
+            }
 
             override fun getAlignment(): Float = 0f
 

@@ -73,6 +73,15 @@ class BudiSettingsState {
     var statusBarMode: StatusBarMode = StatusBarMode.COST
 
     /**
+     * When true, appends the active-session burn rate (`$X.XX/hr`) to
+     * the status bar widget text. Default: `false` — keeps the quiet
+     * aesthetic; the burn rate is always visible in the tooltip when the
+     * daemon reports it. No poller restart needed; takes effect on the
+     * next widget repaint.
+     */
+    var showBurnRate: Boolean = false
+
+    /**
      * When true, the plugin omits the `?surface=jetbrains` filter so the
      * status bar shows aggregate spend across every editor host on the
      * machine. Default: `false` — the per-host scope is what makes the

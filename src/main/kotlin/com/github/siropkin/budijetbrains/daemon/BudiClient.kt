@@ -111,6 +111,9 @@ internal data class StatuslineData(
     @SerializedName("contributing_providers") val contributingProviders: List<String>? = null,
     @SerializedName("quota_used_percent") val quotaUsedPercent: Double? = null,
     @SerializedName("quota_resets_at") val quotaResetsAt: String? = null,
+    @SerializedName("cost_active_block_cents") val costActiveBlockCents: Double? = null,
+    @SerializedName("active_block_started_at") val activeBlockStartedAt: String? = null,
+    @SerializedName("burn_rate_cents_per_hour") val burnRateCentsPerHour: Double? = null,
 )
 
 /**
@@ -274,11 +277,15 @@ internal fun deriveHealthState(
  *           the daemon doesn't return quota fields)
  *   BOTH  — `budi · $X 1d · 67% quota` (falls back to COST when
  *           quota fields are absent)
+ *
+ * [showBurnRate] appends ` · $X.XX/hr` when the daemon reports an
+ * active-session burn rate. Default off — keeps the quiet aesthetic.
  */
 internal fun buildStatusText(
     state: HealthState,
     statusline: StatuslineData?,
     mode: StatusBarMode = StatusBarMode.COST,
+    showBurnRate: Boolean = false,
 ): String {
     val data = statusline ?: StatuslineData()
     return when (state) {
@@ -292,9 +299,57 @@ internal fun buildStatusText(
                     mode == StatusBarMode.BOTH && hasQuotaData(statusline) -> formatBothLine(resolveCosts(data), data)
                     else -> formatCostLine(resolveCosts(data))
                 }
-            "budi · $body"
+            val burnSuffix = if (showBurnRate) formatBurnRateSuffix(statusline)?.let { " · $it" }.orEmpty() else ""
+            "budi · $body$burnSuffix"
         }
     }
+}
+
+/** True when the daemon returned usable active-session fields. */
+internal fun hasActiveSession(statusline: StatuslineData?): Boolean {
+    val cents = statusline?.costActiveBlockCents ?: return false
+    val rate = statusline.burnRateCentsPerHour ?: return false
+    return cents.isFinite() && rate.isFinite() && statusline.activeBlockStartedAt != null
+}
+
+/**
+ * Compute elapsed minutes since the active block started. Returns
+ * `null` when the timestamp is missing or unparseable. The daemon
+ * sends ISO-8601 UTC; we compare against the local clock.
+ */
+internal fun activeBlockElapsedMinutes(startedAt: String?): Long? {
+    if (startedAt.isNullOrBlank()) return null
+    return try {
+        val start = java.time.Instant.parse(startedAt)
+        val elapsed = java.time.Duration.between(start, java.time.Instant.now())
+        if (elapsed.isNegative) 0L else elapsed.toMinutes()
+    } catch (_: Exception) {
+        null
+    }
+}
+
+/**
+ * Format the active-session line for the tooltip.
+ * `Active session: $0.42 · 12min · $2.10/hr`
+ */
+internal fun formatActiveSessionLine(statusline: StatuslineData): String? {
+    if (!hasActiveSession(statusline)) return null
+    val costDollars = statusline.costActiveBlockCents!! / 100.0
+    val rateDollars = statusline.burnRateCentsPerHour!! / 100.0
+    val minutes = activeBlockElapsedMinutes(statusline.activeBlockStartedAt)
+    val elapsedPart = if (minutes != null) " · ${minutes}min" else ""
+    return "Active session: ${formatCost(costDollars)}$elapsedPart · ${formatCost(rateDollars)}/hr"
+}
+
+/**
+ * Format the burn-rate suffix for the status bar widget.
+ * Returns `$2.10/hr` or `null` when the daemon doesn't report a
+ * burn rate.
+ */
+internal fun formatBurnRateSuffix(statusline: StatuslineData?): String? {
+    val rate = statusline?.burnRateCentsPerHour ?: return null
+    if (!rate.isFinite()) return null
+    return "${formatCost(rate / 100.0)}/hr"
 }
 
 /**
@@ -310,6 +365,19 @@ internal fun quotaPacingLabel(usedPercent: Double): String? =
         usedPercent >= 70.0 -> "Quota elevated"
         else -> null
     }
+
+/** Append the quota section to the tooltip lines (if quota data present). */
+private fun appendQuotaSection(
+    lines: MutableList<String>,
+    statusline: StatuslineData?,
+) {
+    if (!hasQuotaData(statusline)) return
+    lines += ""
+    val pct = statusline!!.quotaUsedPercent!!
+    val resetSuffix = if (!statusline.quotaResetsAt.isNullOrBlank()) " · resets ${statusline.quotaResetsAt}" else ""
+    lines += "Quota: ${formatQuotaPercent(pct)} used$resetSuffix"
+    quotaPacingLabel(pct)?.let { lines += it }
+}
 
 /**
  * Build a status-bar tooltip. Mirrors `buildTooltip` in budi-cursor with
@@ -336,17 +404,15 @@ internal fun buildTooltip(
         }
         else -> Unit
     }
+    formatActiveSessionLine(statusline ?: StatuslineData())?.let {
+        lines += it
+        lines += ""
+    }
     val costs = resolveCosts(statusline ?: StatuslineData())
     lines += "1d  ${formatCost(costs.cost1d)}"
     lines += "7d  ${formatCost(costs.cost7d)}"
     lines += "30d ${formatCost(costs.cost30d)}"
-    if (hasQuotaData(statusline)) {
-        lines += ""
-        val pct = statusline!!.quotaUsedPercent!!
-        val resetSuffix = if (!statusline.quotaResetsAt.isNullOrBlank()) " · resets ${statusline.quotaResetsAt}" else ""
-        lines += "Quota: ${formatQuotaPercent(pct)} used$resetSuffix"
-        quotaPacingLabel(pct)?.let { lines += it }
-    }
+    appendQuotaSection(lines, statusline)
     lines += ""
     val contributing = statusline?.contributingProviders.orEmpty()
     if (contributing.size > 1) {
