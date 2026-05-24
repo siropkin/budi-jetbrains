@@ -713,6 +713,230 @@ class BudiClientPureLogicTest {
     }
 }
 
+class BudiClientBreakdownAndPacingTest {
+    // ── Per-provider breakdown ─────────────────────────────────────
+
+    @Test
+    fun `hasProviderBreakdown returns false when data is null or missing`() {
+        assertFalse(hasProviderBreakdown(null))
+        assertFalse(hasProviderBreakdown(StatuslineData()))
+    }
+
+    @Test
+    fun `hasProviderBreakdown returns false with fewer than 2 non-zero providers`() {
+        assertFalse(hasProviderBreakdown(StatuslineData(breakdownByProvider = emptyMap())))
+        assertFalse(
+            hasProviderBreakdown(
+                StatuslineData(breakdownByProvider = mapOf("claude_code" to 32.10)),
+            ),
+        )
+        assertFalse(
+            hasProviderBreakdown(
+                StatuslineData(breakdownByProvider = mapOf("claude_code" to 32.10, "cursor" to 0.0)),
+            ),
+        )
+    }
+
+    @Test
+    fun `hasProviderBreakdown returns true with 2 or more non-zero providers`() {
+        assertTrue(
+            hasProviderBreakdown(
+                StatuslineData(
+                    breakdownByProvider = mapOf("claude_code" to 32.10, "cursor" to 11.50),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `hasProviderBreakdown ignores non-finite values`() {
+        assertFalse(
+            hasProviderBreakdown(
+                StatuslineData(
+                    breakdownByProvider = mapOf("claude_code" to 32.10, "cursor" to Double.NaN),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `formatProviderBreakdown renders sorted descending by cost`() {
+        val breakdown = mapOf("cursor" to 11.50, "claude_code" to 32.10, "copilot_chat" to 4.50)
+        val lines = formatProviderBreakdown(breakdown)
+        assertEquals("By provider (30d):", lines[0])
+        assertTrue(lines[1].contains("Claude Code"))
+        assertTrue(lines[1].contains("$32.10"))
+        assertTrue(lines[2].contains("Cursor"))
+        assertTrue(lines[2].contains("$11.50"))
+        assertTrue(lines[3].contains("Copilot Chat"))
+        assertTrue(lines[3].contains("$4.50"))
+    }
+
+    @Test
+    fun `formatProviderBreakdown returns empty for fewer than 2 providers`() {
+        assertTrue(formatProviderBreakdown(mapOf("claude_code" to 32.10)).isEmpty())
+        assertTrue(formatProviderBreakdown(emptyMap()).isEmpty())
+    }
+
+    @Test
+    fun `formatProviderBreakdown pads names to align cost column`() {
+        val breakdown = mapOf("cursor" to 11.50, "copilot_chat" to 4.50)
+        val lines = formatProviderBreakdown(breakdown)
+        val cursorLine = lines.first { it.contains("Cursor") }
+        val copilotLine = lines.first { it.contains("Copilot Chat") }
+        val cursorCostIdx = cursorLine.indexOf('$')
+        val copilotCostIdx = copilotLine.indexOf('$')
+        assertEquals(cursorCostIdx, copilotCostIdx)
+    }
+
+    @Test
+    fun `buildTooltip includes provider breakdown when 2+ providers present`() {
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                breakdownByProvider = mapOf("claude_code" to 32.10, "cursor" to 11.50, "copilot_chat" to 4.50),
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("By provider (30d):"))
+        assertTrue(tip.contains("Claude Code"))
+        assertTrue(tip.contains("$32.10"))
+        assertTrue(tip.contains("Cursor"))
+        assertTrue(tip.contains("$11.50"))
+    }
+
+    @Test
+    fun `buildTooltip omits provider breakdown when single provider`() {
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                breakdownByProvider = mapOf("claude_code" to 32.10),
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("By provider"))
+    }
+
+    @Test
+    fun `buildTooltip omits provider breakdown when absent`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("By provider"))
+    }
+
+    // ── Billing-cycle pacing ───────────────────────────────────────
+
+    @Test
+    fun `spendPacingHint returns null below 130`() {
+        assertNull(spendPacingHint(0.0))
+        assertNull(spendPacingHint(45.0))
+        assertNull(spendPacingHint(130.0))
+        assertNull(spendPacingHint(Double.NaN))
+    }
+
+    @Test
+    fun `spendPacingHint returns yellow above 130`() {
+        assertEquals("⚡ ", spendPacingHint(130.1))
+        assertEquals("⚡ ", spendPacingHint(175.0))
+    }
+
+    @Test
+    fun `spendPacingHint returns red above 175`() {
+        assertEquals("⚠ ", spendPacingHint(175.1))
+        assertEquals("⚠ ", spendPacingHint(200.0))
+    }
+
+    @Test
+    fun `formatPacingLine returns null when fields are missing`() {
+        assertNull(formatPacingLine(null))
+        assertNull(formatPacingLine(StatuslineData()))
+        assertNull(formatPacingLine(StatuslineData(spendPacePercent = 45.0)))
+        assertNull(formatPacingLine(StatuslineData(cycleElapsedPercent = 60.0)))
+    }
+
+    @Test
+    fun `formatPacingLine returns null when values are non-finite`() {
+        assertNull(
+            formatPacingLine(
+                StatuslineData(cycleElapsedPercent = Double.NaN, spendPacePercent = 45.0),
+            ),
+        )
+        assertNull(
+            formatPacingLine(
+                StatuslineData(cycleElapsedPercent = 60.0, spendPacePercent = Double.POSITIVE_INFINITY),
+            ),
+        )
+    }
+
+    @Test
+    fun `formatPacingLine renders both values`() {
+        val data = StatuslineData(cycleElapsedPercent = 60.0, spendPacePercent = 45.0)
+        assertEquals("Pacing: 60% through month, 45% of typical spend", formatPacingLine(data))
+    }
+
+    @Test
+    fun `formatPacingLine rounds fractional values`() {
+        val data = StatuslineData(cycleElapsedPercent = 60.4, spendPacePercent = 45.6)
+        assertEquals("Pacing: 60% through month, 46% of typical spend", formatPacingLine(data))
+    }
+
+    @Test
+    fun `formatPacingLine includes yellow hint when pace is hot`() {
+        val data = StatuslineData(cycleElapsedPercent = 60.0, spendPacePercent = 150.0)
+        val line = formatPacingLine(data)!!
+        assertTrue(line.startsWith("⚡ "))
+        assertTrue(line.contains("150% of typical spend"))
+    }
+
+    @Test
+    fun `formatPacingLine includes red hint when pace is very hot`() {
+        val data = StatuslineData(cycleElapsedPercent = 60.0, spendPacePercent = 200.0)
+        val line = formatPacingLine(data)!!
+        assertTrue(line.startsWith("⚠ "))
+        assertTrue(line.contains("200% of typical spend"))
+    }
+
+    @Test
+    fun `buildTooltip includes pacing line when data present`() {
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                cycleElapsedPercent = 60.0,
+                spendPacePercent = 45.0,
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("Pacing: 60% through month, 45% of typical spend"))
+    }
+
+    @Test
+    fun `buildTooltip omits pacing line when data absent`() {
+        val data = StatuslineData(cost1d = 1.0, cost7d = 2.0, cost30d = 3.0)
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertFalse(tip.contains("Pacing:"))
+    }
+
+    @Test
+    fun `buildTooltip includes both breakdown and pacing together`() {
+        val data =
+            StatuslineData(
+                cost1d = 1.0,
+                cost7d = 2.0,
+                cost30d = 3.0,
+                breakdownByProvider = mapOf("claude_code" to 32.10, "cursor" to 11.50),
+                cycleElapsedPercent = 60.0,
+                spendPacePercent = 45.0,
+            )
+        val tip = buildTooltip(HealthState.GREEN, data, DEFAULT_CLOUD_ENDPOINT)
+        assertTrue(tip.contains("By provider (30d):"))
+        assertTrue(tip.contains("Pacing: 60% through month, 45% of typical spend"))
+        val breakdownIdx = tip.indexOf("By provider")
+        val pacingIdx = tip.indexOf("Pacing:")
+        assertTrue(breakdownIdx < pacingIdx)
+    }
+}
+
 class BudiClientHttpTest {
     private lateinit var server: HttpServer
     private lateinit var baseUrl: String
@@ -922,5 +1146,39 @@ class BudiClientHttpTest {
         }
         client.fetchStatusline(baseUrl, includeOtherSurfaces = true)
         assertNull(capturedQuery)
+    }
+
+    @Test
+    fun `fetchStatusline parses breakdown and pacing fields when present`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body =
+                """{"cost_1d":1.5,""" +
+                    """"breakdown_by_provider":{"claude_code":32.10,"cursor":11.50},""" +
+                    """"cycle_elapsed_percent":60.0,""" +
+                    """"spend_pace_percent":45.0}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertEquals(mapOf("claude_code" to 32.10, "cursor" to 11.50), data.breakdownByProvider)
+        assertEquals(60.0, data.cycleElapsedPercent!!, 1e-9)
+        assertEquals(45.0, data.spendPacePercent!!, 1e-9)
+    }
+
+    @Test
+    fun `fetchStatusline leaves breakdown and pacing fields null when daemon omits them`() {
+        server.createContext("/analytics/statusline") { exchange: HttpExchange ->
+            val body = """{"cost_1d":1.5}"""
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(200, body.length.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        val data = client.fetchStatusline(baseUrl)
+        assertNotNull(data)
+        assertNull(data.breakdownByProvider)
+        assertNull(data.cycleElapsedPercent)
+        assertNull(data.spendPacePercent)
     }
 }

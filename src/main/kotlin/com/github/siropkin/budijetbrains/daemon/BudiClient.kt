@@ -114,6 +114,9 @@ internal data class StatuslineData(
     @SerializedName("cost_active_block_cents") val costActiveBlockCents: Double? = null,
     @SerializedName("active_block_started_at") val activeBlockStartedAt: String? = null,
     @SerializedName("burn_rate_cents_per_hour") val burnRateCentsPerHour: Double? = null,
+    @SerializedName("breakdown_by_provider") val breakdownByProvider: Map<String, Double>? = null,
+    @SerializedName("cycle_elapsed_percent") val cycleElapsedPercent: Double? = null,
+    @SerializedName("spend_pace_percent") val spendPacePercent: Double? = null,
 )
 
 /**
@@ -380,6 +383,87 @@ private fun appendQuotaSection(
 }
 
 /**
+ * True when the daemon returned a per-provider breakdown with at least two
+ * providers carrying non-zero 30d spend. A single-provider breakdown adds
+ * no information beyond the aggregate cost line, so the section is hidden.
+ */
+internal fun hasProviderBreakdown(statusline: StatuslineData?): Boolean {
+    val breakdown = statusline?.breakdownByProvider ?: return false
+    return breakdown.count { (_, cost) -> cost.isFinite() && cost > 0.0 } >= 2
+}
+
+/**
+ * Format the per-provider breakdown section for the tooltip. Providers are
+ * right-aligned to the widest cost string so the column reads cleanly.
+ */
+internal fun formatProviderBreakdown(breakdown: Map<String, Double>): List<String> {
+    val nonZero =
+        breakdown
+            .filter { (_, cost) -> cost.isFinite() && cost > 0.0 }
+            .entries
+            .sortedByDescending { it.value }
+    if (nonZero.size < 2) return emptyList()
+
+    val formatted = nonZero.map { (provider, cost) -> formatProviderName(provider) to formatCost(cost) }
+    val maxNameLen = formatted.maxOf { it.first.length }
+
+    return buildList {
+        add("By provider (30d):")
+        for ((name, cost) in formatted) {
+            add("  ${name.padEnd(maxNameLen)}  $cost")
+        }
+    }
+}
+
+/** Append the per-provider breakdown to the tooltip lines (if present). */
+private fun appendProviderBreakdown(
+    lines: MutableList<String>,
+    statusline: StatuslineData?,
+) {
+    if (!hasProviderBreakdown(statusline)) return
+    lines += ""
+    lines += formatProviderBreakdown(statusline!!.breakdownByProvider!!)
+}
+
+/**
+ * Pacing label for the billing-cycle spend pace. Returns a warning prefix
+ * when spending is running hot relative to typical. Mirrors budi-cursor's
+ * tooltip color hints:
+ *   > 175% → red warning
+ *   > 130% → yellow warning
+ *   ≤ 130% → no prefix (plain text)
+ */
+internal fun spendPacingHint(pacePercent: Double): String? =
+    when {
+        !pacePercent.isFinite() -> null
+        pacePercent > 175.0 -> "⚠ "
+        pacePercent > 130.0 -> "⚡ "
+        else -> null
+    }
+
+/**
+ * Format the pacing line for the tooltip. Returns null when the daemon
+ * does not supply pacing data.
+ */
+internal fun formatPacingLine(statusline: StatuslineData?): String? {
+    val pace = statusline?.spendPacePercent ?: return null
+    val elapsed = statusline.cycleElapsedPercent ?: return null
+    if (!pace.isFinite() || !elapsed.isFinite()) return null
+    val hint = spendPacingHint(pace) ?: ""
+    return "${hint}Pacing: ${Math.round(elapsed)}% through month, ${Math.round(pace)}% of typical spend"
+}
+
+/** Append the pacing line to the tooltip lines (if present). */
+private fun appendPacingSection(
+    lines: MutableList<String>,
+    statusline: StatuslineData?,
+) {
+    val pacingLine = formatPacingLine(statusline) ?: return
+    lines += ""
+    lines += pacingLine
+}
+
+/**
  * Build a status-bar tooltip. Mirrors `buildTooltip` in budi-cursor with
  * the host-dependent branches collapsed to the JetBrains-only path.
  */
@@ -412,7 +496,9 @@ internal fun buildTooltip(
     lines += "1d  ${formatCost(costs.cost1d)}"
     lines += "7d  ${formatCost(costs.cost7d)}"
     lines += "30d ${formatCost(costs.cost30d)}"
+    appendProviderBreakdown(lines, statusline)
     appendQuotaSection(lines, statusline)
+    appendPacingSection(lines, statusline)
     lines += ""
     val contributing = statusline?.contributingProviders.orEmpty()
     if (contributing.size > 1) {
