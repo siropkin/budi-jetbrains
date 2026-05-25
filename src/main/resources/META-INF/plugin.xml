@@ -64,6 +64,8 @@
             serviceImplementation="com.github.siropkin.budijetbrains.poller.BudiPoller"/>
         <applicationService
             serviceImplementation="com.github.siropkin.budijetbrains.notifier.BudiUpgradeNotifier"/>
+        <applicationService
+            serviceImplementation="com.github.siropkin.budijetbrains.notifier.BudiCloudOnboardNotifier"/>
 
         <!-- Status bar widget. One instance per open project; reads from
              the application-scoped state above. -->

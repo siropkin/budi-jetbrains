@@ -96,6 +96,7 @@ internal data class DaemonHealth(
     val ok: Boolean = false,
     val version: String = "",
     @SerializedName("api_version") val apiVersion: Int = 0,
+    @SerializedName("cloud_linked") val cloudLinked: Boolean? = null,
 )
 
 /**

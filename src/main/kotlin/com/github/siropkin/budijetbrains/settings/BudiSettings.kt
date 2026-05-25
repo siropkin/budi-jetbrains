@@ -133,6 +133,15 @@ class BudiSettingsState {
      * fresh-install cycle restarts the onboarding flow cleanly.
      */
     var dismissedInstallNotification: Boolean = false
+
+    /**
+     * Persistent "dismissed" latch for the cloud-onboarding notification
+     * (#92). Once the user clicks "Dismiss" on the cloud onboard balloon,
+     * this flips to `true` and the notification never reappears. Reset to
+     * `false` when `cloud_linked` transitions from `true` to `false` (or
+     * `null`), so a disconnection restarts the cloud-onboarding flow.
+     */
+    var dismissedCloudOnboardNotification: Boolean = false
 }
 
 @Service(Service.Level.APP)
