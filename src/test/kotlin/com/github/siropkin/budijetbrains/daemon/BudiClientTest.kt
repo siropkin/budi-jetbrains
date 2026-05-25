@@ -986,6 +986,32 @@ class BudiClientHttpTest {
     }
 
     @Test
+    fun `fetchHealth parses cloud_linked field when present`() {
+        handle(
+            "/health",
+            200,
+            "application/json",
+            """{"ok":true,"version":"9.0.0","api_version":2,"cloud_linked":false}""".toByteArray(),
+        )
+        val health = client.fetchHealth(baseUrl)
+        assertNotNull(health)
+        assertEquals(false, health.cloudLinked)
+    }
+
+    @Test
+    fun `fetchHealth defaults cloud_linked to null when absent`() {
+        handle(
+            "/health",
+            200,
+            "application/json",
+            """{"ok":true,"version":"8.4.2","api_version":1}""".toByteArray(),
+        )
+        val health = client.fetchHealth(baseUrl)
+        assertNotNull(health)
+        assertNull(health.cloudLinked)
+    }
+
+    @Test
     fun `fetchHealth returns null on non-2xx`() {
         handle("/health", 500, "application/json", "{}".toByteArray())
         assertNull(client.fetchHealth(baseUrl))

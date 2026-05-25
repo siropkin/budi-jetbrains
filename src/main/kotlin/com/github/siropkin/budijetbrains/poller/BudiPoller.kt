@@ -1,6 +1,7 @@
 package com.github.siropkin.budijetbrains.poller
 
 import com.github.siropkin.budijetbrains.daemon.BudiClient
+import com.github.siropkin.budijetbrains.notifier.BudiCloudOnboardNotifier
 import com.github.siropkin.budijetbrains.notifier.BudiUpgradeNotifier
 import com.github.siropkin.budijetbrains.settings.BudiSettings
 import com.github.siropkin.budijetbrains.state.BudiAppState
@@ -125,6 +126,7 @@ class BudiPoller {
         }
         BudiAppState.getInstance().update(health, statusline, settings.state.everSawDaemon)
         BudiUpgradeNotifier.getInstance().onHealthObserved(health)
+        BudiCloudOnboardNotifier.getInstance().onHealthObserved(health)
     }
 
     companion object {
