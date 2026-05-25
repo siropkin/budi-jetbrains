@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-05-25
+
+### Added
+
+- Cloud onboard notification for browser-based sign-up — when the daemon reports `cloud_onboard_url`, a one-time balloon guides the user to complete account setup in their browser. (#92)
+- Per-provider cost breakdown and billing-cycle pacing in the status bar tooltip. (#88)
+- Active-session burn rate displayed in the tooltip and optionally in the status bar. (#90)
+- Copilot quota / requests-remaining mode in the status bar for quota-based plans. (#86)
+
+### Changed
+
+- Rewrite plugin description for the Marketplace listing. (#76)
+- Point Privacy Policy link at getbudi.dev/privacy. (#84)
+- Codify canonical Marketplace listing URLs. (#83)
+- Restructure README hero with Marketplace badges. (#80)
+
 ## [0.1.5] - 2026-05-21
 
 ### Added
@@ -92,7 +108,8 @@ Code quality & hygiene milestone — no user-visible behavior changes. Closes th
 
 - Auto-publish dry-run: first CI-driven push to JetBrains Marketplace under the Beta channel. Validates that `release.yml` builds, signs (skipped for v0.1), and publishes via `PUBLISH_TOKEN` end-to-end. Closes #4.
 
-[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.5...HEAD
+[Unreleased]: https://github.com/siropkin/budi-jetbrains/compare/0.1.6...HEAD
+[0.1.6]: https://github.com/siropkin/budi-jetbrains/compare/0.1.5...0.1.6
 [0.1.5]: https://github.com/siropkin/budi-jetbrains/compare/0.1.4...0.1.5
 [0.1.4]: https://github.com/siropkin/budi-jetbrains/compare/0.1.3...0.1.4
 [0.1.3]: https://github.com/siropkin/budi-jetbrains/compare/0.1.2...0.1.3
